@@ -1,20 +1,39 @@
+import React from 'react';
 import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View } from 'react-native';
+import { NavigationContainer } from '@react-navigation/native';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { GenderScreen } from './screens/GenderScreen';
+import { HeightScreen } from './screens/HeightScreen';
+import { WeightScreen } from './screens/WeightScreen';
+import { ReferralScreen } from './screens/ReferralScreen';
+import { NotificationsScreen } from './screens/NotificationsScreen';
+import { AuthScreen } from './screens/AuthScreen';
+import { HomeScreen } from './screens/HomeScreen';
+import { ResultsScreen } from './screens/ResultsScreen';
+import { RootStackParamList } from './types';
+
+const Stack = createNativeStackNavigator<RootStackParamList>();
 
 export default function App() {
   return (
-    <View style={styles.container}>
-      <Text>Open up App.tsx to start working on your app!</Text>
-      <StatusBar style="auto" />
-    </View>
+    <NavigationContainer>
+      <StatusBar style="light" />
+      <Stack.Navigator
+        initialRouteName="Gender"
+        screenOptions={{
+          headerShown: false,
+          animation: 'slide_from_right',
+        }}
+      >
+        <Stack.Screen name="Gender" component={GenderScreen} />
+        <Stack.Screen name="Height" component={HeightScreen} />
+        <Stack.Screen name="Weight" component={WeightScreen} />
+        <Stack.Screen name="Referral" component={ReferralScreen} />
+        <Stack.Screen name="Notifications" component={NotificationsScreen} />
+        <Stack.Screen name="Auth" component={AuthScreen} />
+        <Stack.Screen name="Home" component={HomeScreen} />
+        <Stack.Screen name="Results" component={ResultsScreen} />
+      </Stack.Navigator>
+    </NavigationContainer>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-});
