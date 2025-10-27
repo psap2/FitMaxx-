@@ -8,6 +8,7 @@ import { WeightScreen } from './screens/WeightScreen';
 import { ReferralScreen } from './screens/ReferralScreen';
 import { NotificationsScreen } from './screens/NotificationsScreen';
 import { AuthScreen } from './screens/AuthScreen';
+import { MainAppScreen } from './screens/MainAppScreen';
 import { HomeScreen } from './screens/HomeScreen';
 import { ResultsScreen } from './screens/ResultsScreen';
 import { RootStackParamList } from './types';
@@ -31,6 +32,14 @@ export default function App() {
         <Stack.Screen name="Referral" component={ReferralScreen} />
         <Stack.Screen name="Notifications" component={NotificationsScreen} />
         <Stack.Screen name="Auth" component={AuthScreen} />
+        <Stack.Screen 
+          name="MainApp" 
+          component={MainAppScreen}
+          options={{
+            gestureEnabled: false,
+            headerShown: false,
+          }}
+        />
         <Stack.Screen name="Home" component={HomeScreen} />
         <Stack.Screen name="Results" component={ResultsScreen} />
       </Stack.Navigator>

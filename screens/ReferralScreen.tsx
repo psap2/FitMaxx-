@@ -33,12 +33,12 @@ export const ReferralScreen: React.FC<ReferralScreenProps> = ({ navigation, rout
   };
 
   return (
-    <LinearGradient colors={['#0f0c29', '#302b63', '#24243e']} style={styles.container}>
+    <LinearGradient colors={['#000000', '#1a1a1a', '#000000']} style={styles.container}>
       <ProgressBar currentStep={4} totalSteps={6} />
       
       <View style={styles.content}>
         <View style={styles.iconContainer}>
-          <Ionicons name="gift" size={80} color="#4facfe" />
+          <Ionicons name="gift" size={80} color="#FF6B35" />
         </View>
         
         <Text style={styles.title}>Have a referral code?</Text>
@@ -64,7 +64,7 @@ export const ReferralScreen: React.FC<ReferralScreenProps> = ({ navigation, rout
         onPress={handleContinue}
       >
         <LinearGradient
-          colors={['#4facfe', '#00f2fe']}
+          colors={['#FF6B35', '#FF8C42']}
           style={styles.continueGradient}
         >
           <Text style={styles.continueText}>Continue</Text>

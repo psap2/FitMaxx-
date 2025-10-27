@@ -22,7 +22,7 @@ export const GenderScreen: React.FC<GenderScreenProps> = ({ navigation }) => {
   };
 
   return (
-    <LinearGradient colors={['#0f0c29', '#302b63', '#24243e']} style={styles.container}>
+    <LinearGradient colors={['#000000', '#1a1a1a', '#000000']} style={styles.container}>
       <ProgressBar currentStep={1} totalSteps={6} />
       
       <View style={styles.content}>
@@ -37,7 +37,7 @@ export const GenderScreen: React.FC<GenderScreenProps> = ({ navigation }) => {
             <Ionicons 
               name="male" 
               size={60} 
-              color={selectedGender === 'male' ? '#4facfe' : 'rgba(255, 255, 255, 0.6)'} 
+              color={selectedGender === 'male' ? '#FF6B35' : 'rgba(255, 255, 255, 0.6)'} 
             />
             <Text style={[styles.optionText, selectedGender === 'male' && styles.optionTextSelected]}>
               Male
@@ -51,7 +51,7 @@ export const GenderScreen: React.FC<GenderScreenProps> = ({ navigation }) => {
             <Ionicons 
               name="female" 
               size={60} 
-              color={selectedGender === 'female' ? '#4facfe' : 'rgba(255, 255, 255, 0.6)'} 
+              color={selectedGender === 'female' ? '#FF6B35' : 'rgba(255, 255, 255, 0.6)'} 
             />
             <Text style={[styles.optionText, selectedGender === 'female' && styles.optionTextSelected]}>
               Female
@@ -66,7 +66,7 @@ export const GenderScreen: React.FC<GenderScreenProps> = ({ navigation }) => {
         disabled={!selectedGender}
       >
         <LinearGradient
-          colors={selectedGender ? ['#4facfe', '#00f2fe'] : ['#666', '#888']}
+          colors={selectedGender ? ['#FF6B35', '#FF8C42'] : ['#666', '#888']}
           style={styles.continueGradient}
         >
           <Text style={styles.continueText}>Continue</Text>

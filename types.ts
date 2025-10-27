@@ -37,6 +37,10 @@ export type RootStackParamList = {
     weight: { value: number; unit: 'lbs' | 'kg' };
     referralCode?: string;
   };
+  MainApp: undefined;
+  Scan: undefined;
+  Extras: undefined;
+  Coach: undefined;
   Home: undefined;
   Results: { analysis: PhysiqueAnalysis; imageUri: string };
 };

@@ -32,7 +32,7 @@ export const WeightScreen: React.FC<WeightScreenProps> = ({ navigation, route })
 
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-      <LinearGradient colors={['#0f0c29', '#302b63', '#24243e']} style={styles.container}>
+      <LinearGradient colors={['#000000', '#1a1a1a', '#000000']} style={styles.container}>
         <ProgressBar currentStep={3} totalSteps={6} />
         
         <View style={styles.content}>
@@ -76,7 +76,7 @@ export const WeightScreen: React.FC<WeightScreenProps> = ({ navigation, route })
           disabled={!isValid}
         >
           <LinearGradient
-            colors={isValid ? ['#4facfe', '#00f2fe'] : ['#666', '#888']}
+            colors={isValid ? ['#FF6B35', '#FF8C42'] : ['#666', '#888']}
             style={styles.continueGradient}
           >
             <Text style={styles.continueText}>Continue</Text>

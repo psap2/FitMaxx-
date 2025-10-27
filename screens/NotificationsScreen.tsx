@@ -33,13 +33,13 @@ export const NotificationsScreen: React.FC<NotificationsScreenProps> = ({ naviga
   };
 
   return (
-    <LinearGradient colors={['#0f0c29', '#302b63', '#24243e']} style={styles.container}>
+    <LinearGradient colors={['#000000', '#1a1a1a', '#000000']} style={styles.container}>
       <ProgressBar currentStep={5} totalSteps={6} />
       
       <View style={styles.content}>
         <View style={styles.iconContainer}>
           <View style={styles.iconCircle}>
-            <Ionicons name="notifications" size={80} color="#4facfe" />
+            <Ionicons name="notifications" size={80} color="#FF6B35" />
           </View>
         </View>
         
@@ -50,15 +50,15 @@ export const NotificationsScreen: React.FC<NotificationsScreenProps> = ({ naviga
 
         <View style={styles.benefitsContainer}>
           <View style={styles.benefit}>
-            <Ionicons name="checkmark-circle" size={24} color="#4facfe" />
+            <Ionicons name="checkmark-circle" size={24} color="#FF6B35" />
             <Text style={styles.benefitText}>Daily workout reminders</Text>
           </View>
           <View style={styles.benefit}>
-            <Ionicons name="checkmark-circle" size={24} color="#4facfe" />
+            <Ionicons name="checkmark-circle" size={24} color="#FF6B35" />
             <Text style={styles.benefitText}>Progress milestones</Text>
           </View>
           <View style={styles.benefit}>
-            <Ionicons name="checkmark-circle" size={24} color="#4facfe" />
+            <Ionicons name="checkmark-circle" size={24} color="#FF6B35" />
             <Text style={styles.benefitText}>Personalized tips</Text>
           </View>
         </View>
@@ -85,7 +85,7 @@ export const NotificationsScreen: React.FC<NotificationsScreenProps> = ({ naviga
         onPress={handleContinue}
       >
         <LinearGradient
-          colors={['#4facfe', '#00f2fe']}
+          colors={['#FF6B35', '#FF8C42']}
           style={styles.continueGradient}
         >
           <Text style={styles.continueText}>Continue</Text>

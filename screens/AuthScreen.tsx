@@ -19,17 +19,17 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ navigation, route }) => 
   const handleGoogleSignIn = () => {
     // Handle Google Sign In - you'll implement this
     console.log('Google Sign In', route.params);
-    navigation.navigate('Home');
+    navigation.navigate('MainApp');
   };
 
   const handleAppleSignIn = () => {
     // Handle Apple Sign In - you'll implement this
     console.log('Apple Sign In', route.params);
-    navigation.navigate('Home');
+    navigation.navigate('MainApp');
   };
 
   return (
-    <LinearGradient colors={['#0f0c29', '#302b63', '#24243e']} style={styles.container}>
+    <LinearGradient colors={['#000000', '#1a1a1a', '#000000']} style={styles.container}>
       <ProgressBar currentStep={6} totalSteps={6} />
       
       <View style={styles.content}>

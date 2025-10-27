@@ -88,7 +88,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
 
   return (
     <LinearGradient
-      colors={['#0f0c29', '#302b63', '#24243e']}
+      colors={['#000000', '#1a1a1a', '#000000']}
       style={styles.container}
     >
       <View style={styles.content}>
@@ -123,7 +123,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
         <View style={styles.buttonContainer}>
           <TouchableOpacity style={styles.actionButton} onPress={pickImage}>
             <LinearGradient
-              colors={['#667eea', '#764ba2']}
+              colors={['#FF6B35', '#FF8C42']}
               style={styles.buttonGradient}
             >
               <Ionicons name="images" size={24} color="#fff" />
@@ -133,7 +133,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
 
           <TouchableOpacity style={styles.actionButton} onPress={takePhoto}>
             <LinearGradient
-              colors={['#f093fb', '#f5576c']}
+              colors={['#FF8C42', '#FFA500']}
               style={styles.buttonGradient}
             >
               <Ionicons name="camera" size={24} color="#fff" />
@@ -149,7 +149,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
             disabled={isAnalyzing}
           >
             <LinearGradient
-              colors={['#4facfe', '#00f2fe']}
+              colors={['#FF6B35', '#FF8C42']}
               style={styles.analyzeGradient}
             >
               {isAnalyzing ? (
