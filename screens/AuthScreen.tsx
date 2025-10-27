@@ -29,7 +29,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ navigation, route }) => 
   };
 
   return (
-    <LinearGradient colors={['#000000', '#1a1a1a', '#000000']} style={styles.container}>
+    <LinearGradient colors={['#000000', '#000000', '#000000']} style={styles.container}>
       <ProgressBar currentStep={6} totalSteps={6} />
       
       <View style={styles.content}>
@@ -117,7 +117,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   googleButton: {
-    backgroundColor: '#4285F4',
+    backgroundColor: '#FF6B35',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',

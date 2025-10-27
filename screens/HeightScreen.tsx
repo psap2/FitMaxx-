@@ -38,7 +38,7 @@ export const HeightScreen: React.FC<HeightScreenProps> = ({ navigation, route })
 
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-      <LinearGradient colors={['#000000', '#1a1a1a', '#000000']} style={styles.container}>
+      <LinearGradient colors={['#000000', '#000000', '#000000']} style={styles.container}>
         <ProgressBar currentStep={2} totalSteps={6} />
         
         <View style={styles.content}>
@@ -163,7 +163,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   unitButtonActive: {
-    backgroundColor: '#4facfe',
+    backgroundColor: '#FF6B35',
   },
   unitText: {
     fontSize: 16,
@@ -187,11 +187,11 @@ const styles = StyleSheet.create({
     padding: 20,
     fontSize: 48,
     fontWeight: 'bold',
-    color: '#fff',
+    color: '#FF6B35',
     textAlign: 'center',
     width: '100%',
     borderWidth: 2,
-    borderColor: 'rgba(79, 172, 254, 0.3)',
+    borderColor: 'rgba(255, 107, 53, 0.3)',
   },
   inputLabel: {
     fontSize: 16,

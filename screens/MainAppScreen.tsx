@@ -41,7 +41,7 @@ export const MainAppScreen: React.FC<MainAppScreenProps> = ({ navigation }) => {
   return (
     <View style={styles.container}>
       <LinearGradient
-        colors={['#000000', '#1a1a1a', '#000000']}
+        colors={['#000000', '#000000', '#000000']}
         style={styles.background}
       >
         <View style={styles.content}>

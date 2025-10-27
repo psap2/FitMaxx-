@@ -33,10 +33,10 @@ export const MuscleScoreChart: React.FC<MuscleScoreChartProps> = ({ muscleScores
 
   const chartConfig = {
     backgroundColor: 'transparent',
-    backgroundGradientFrom: 'rgba(99, 102, 241, 0.1)',
-    backgroundGradientTo: 'rgba(168, 85, 247, 0.1)',
+    backgroundGradientFrom: 'rgba(255, 107, 53, 0.1)',
+    backgroundGradientTo: 'rgba(255, 140, 66, 0.1)',
     decimalPlaces: 1,
-    color: (opacity = 1) => `rgba(139, 92, 246, ${opacity})`,
+    color: (opacity = 1) => `rgba(255, 107, 53, ${opacity})`,
     labelColor: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`,
     style: {
       borderRadius: 16,

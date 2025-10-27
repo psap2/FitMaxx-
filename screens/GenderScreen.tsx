@@ -22,7 +22,7 @@ export const GenderScreen: React.FC<GenderScreenProps> = ({ navigation }) => {
   };
 
   return (
-    <LinearGradient colors={['#000000', '#1a1a1a', '#000000']} style={styles.container}>
+    <LinearGradient colors={['#000000', '#000000', '#000000']} style={styles.container}>
       <ProgressBar currentStep={1} totalSteps={6} />
       
       <View style={styles.content}>

@@ -32,7 +32,7 @@ const styles = StyleSheet.create({
   },
   fill: {
     height: '100%',
-    backgroundColor: '#4facfe',
+    backgroundColor: '#FF6B35',
     borderRadius: 2,
   },
 });

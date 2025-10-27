@@ -33,7 +33,7 @@ export const ReferralScreen: React.FC<ReferralScreenProps> = ({ navigation, rout
   };
 
   return (
-    <LinearGradient colors={['#000000', '#1a1a1a', '#000000']} style={styles.container}>
+    <LinearGradient colors={['#000000', '#000000', '#000000']} style={styles.container}>
       <ProgressBar currentStep={4} totalSteps={6} />
       
       <View style={styles.content}>

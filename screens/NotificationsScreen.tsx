@@ -33,7 +33,7 @@ export const NotificationsScreen: React.FC<NotificationsScreenProps> = ({ naviga
   };
 
   return (
-    <LinearGradient colors={['#000000', '#1a1a1a', '#000000']} style={styles.container}>
+    <LinearGradient colors={['#000000', '#000000', '#000000']} style={styles.container}>
       <ProgressBar currentStep={5} totalSteps={6} />
       
       <View style={styles.content}>
@@ -66,7 +66,7 @@ export const NotificationsScreen: React.FC<NotificationsScreenProps> = ({ naviga
         {!enabled && (
           <TouchableOpacity style={styles.enableButton} onPress={handleEnable}>
             <LinearGradient
-              colors={['#667eea', '#764ba2']}
+              colors={['#FF6B35', '#FF8C42']}
               style={styles.enableGradient}
             >
               <Ionicons name="notifications-outline" size={24} color="#fff" />
