@@ -7,12 +7,20 @@ interface ProgressBarProps {
 }
 
 export const ProgressBar: React.FC<ProgressBarProps> = ({ currentStep, totalSteps }) => {
-  const progress = (currentStep / totalSteps) * 100;
+  const segments = Array.from({ length: totalSteps });
 
   return (
     <View style={styles.container}>
-      <View style={styles.background}>
-        <View style={[styles.fill, { width: `${progress}%` }]} />
+      <View style={styles.segmentsRow}>
+        {segments.map((_, index) => {
+          const isFilled = index < currentStep;
+          return (
+            <View
+              key={index}
+              style={[styles.segment, isFilled ? styles.segmentFilled : styles.segmentEmpty]}
+            />
+          );
+        })}
       </View>
     </View>
   );
@@ -24,15 +32,19 @@ const styles = StyleSheet.create({
     paddingTop: 60,
     paddingBottom: 20,
   },
-  background: {
-    height: 4,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    borderRadius: 2,
-    overflow: 'hidden',
+  segmentsRow: {
+    flexDirection: 'row',
+    gap: 6,
   },
-  fill: {
-    height: '100%',
+  segment: {
+    flex: 1,
+    height: 6,
+    borderRadius: 3,
+  },
+  segmentEmpty: {
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+  },
+  segmentFilled: {
     backgroundColor: '#FF6B35',
-    borderRadius: 2,
   },
 });

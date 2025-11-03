@@ -124,7 +124,8 @@ const styles = StyleSheet.create({
     textDecorationLine: 'underline',
   },
   continueButton: {
-    margin: 20,
+    marginHorizontal: 20,
+    marginBottom: 64,
     borderRadius: 16,
     overflow: 'hidden',
   },

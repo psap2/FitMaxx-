@@ -116,11 +116,13 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 4,
     marginBottom: 40,
+    alignSelf: 'stretch',
   },
   unitButton: {
     flex: 1,
     paddingVertical: 12,
     alignItems: 'center',
+    justifyContent: 'center',
     borderRadius: 8,
   },
   unitButtonActive: {
@@ -155,7 +157,8 @@ const styles = StyleSheet.create({
     marginTop: 12,
   },
   continueButton: {
-    margin: 20,
+    marginHorizontal: 20,
+    marginBottom: 64,
     borderRadius: 16,
     overflow: 'hidden',
   },

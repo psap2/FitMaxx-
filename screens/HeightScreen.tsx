@@ -92,6 +92,7 @@ export const HeightScreen: React.FC<HeightScreenProps> = ({ navigation, route })
             </View>
           </View>
         ) : (
+          <View style={styles.inputRow}>
           <View style={styles.inputGroup}>
             <TextInput
               style={styles.input}
@@ -105,6 +106,7 @@ export const HeightScreen: React.FC<HeightScreenProps> = ({ navigation, route })
               onSubmitEditing={Keyboard.dismiss}
             />
             <Text style={styles.inputLabel}>centimeters</Text>
+          </View>
           </View>
         )}
       </View>
@@ -155,11 +157,13 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 4,
     marginBottom: 40,
+    alignSelf: 'stretch',
   },
   unitButton: {
     flex: 1,
     paddingVertical: 12,
     alignItems: 'center',
+    justifyContent: 'center',
     borderRadius: 8,
   },
   unitButtonActive: {
@@ -193,13 +197,15 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: 'rgba(255, 107, 53, 0.3)',
   },
+  // removed singleInput constraints to keep full width and consistent positioning
   inputLabel: {
     fontSize: 16,
     color: 'rgba(255, 255, 255, 0.6)',
     marginTop: 12,
   },
   continueButton: {
-    margin: 20,
+    marginHorizontal: 20,
+    marginBottom: 64,
     borderRadius: 16,
     overflow: 'hidden',
   },
