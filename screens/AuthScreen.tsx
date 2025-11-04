@@ -1,5 +1,5 @@
-import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import React, { useEffect } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -8,12 +8,14 @@ import { ProgressBar } from '../components/ProgressBar';
 import { RootStackParamList } from '../types';
 import {
   GoogleSignin,
-  GoogleSigninButton,
   statusCodes,
-} from '@react-native-google-signin/google-signin'
-import { supabase } from '../utils/supabase'
+} from '@react-native-google-signin/google-signin';
+import { supabase } from '../utils/supabase';
 
-type AuthScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'Auth'>;
+type AuthScreenNavigationProp = NativeStackNavigationProp<
+  RootStackParamList,
+  'Auth'
+>;
 type AuthScreenRouteProp = RouteProp<RootStackParamList, 'Auth'>;
 
 interface AuthScreenProps {
@@ -22,14 +24,51 @@ interface AuthScreenProps {
 }
 
 export const AuthScreen: React.FC<AuthScreenProps> = ({ navigation, route }) => {
-  const handleGoogleSignIn = () => {
-    // Handle Google Sign In - you'll implement this
-    console.log('Google Sign In', route.params);
-    navigation.navigate('MainApp');
+  useEffect(() => {
+    GoogleSignin.configure({
+      webClientId:
+        '507850657335-f6knolk41keva0b053ra871qui3teb8u.apps.googleusercontent.com',
+    });
+  }, []);
+
+  const handleGoogleSignIn = async () => {
+    try {
+      await GoogleSignin.hasPlayServices();
+      const response = await GoogleSignin.signIn();
+
+      // Google Sign-In gives you an ID token
+      const idToken = response?.data?.idToken;
+      if (!idToken) {
+        Alert.alert('Error', 'No ID token returned from Google Sign-In');
+        return;
+      }
+
+      // Sign in with Supabase using the Google ID token
+      const { data, error } = await supabase.auth.signInWithIdToken({
+        provider: 'google',
+        token: idToken,
+      });
+
+      if (error) {
+        console.error('Supabase sign-in error:', error.message);
+        Alert.alert('Sign-in failed', error.message);
+      } else {
+        console.log('Supabase user data:', data);
+        navigation.navigate('MainApp');
+      }
+    } catch (error: any) {
+      if (error.code === statusCodes.IN_PROGRESS) {
+        console.log('Sign-in already in progress');
+      } else if (error.code === statusCodes.PLAY_SERVICES_NOT_AVAILABLE) {
+        Alert.alert('Error', 'Google Play Services not available or outdated.');
+      } else {
+        console.error(error);
+        Alert.alert('Error', error.message);
+      }
+    }
   };
 
   const handleAppleSignIn = () => {
-    // Handle Apple Sign In - you'll implement this
     console.log('Apple Sign In', route.params);
     navigation.navigate('MainApp');
   };
@@ -48,6 +87,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ navigation, route }) => 
           <Text style={styles.title}>Create your account</Text>
           <Text style={styles.subtitle}>Choose your preferred sign-in method</Text>
 
+          {/* ✅ Updated Google button */}
           <TouchableOpacity style={styles.authButton} onPress={handleGoogleSignIn}>
             <View style={styles.googleButton}>
               <Ionicons name="logo-google" size={24} color="#fff" />
