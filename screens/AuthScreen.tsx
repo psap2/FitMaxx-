@@ -28,7 +28,9 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ navigation, route }) => 
     GoogleSignin.configure({
       webClientId:
         '507850657335-ivrmtuhiidkl7i3h1e9e7s4bc2hjqmlb.apps.googleusercontent.com',
-    });
+      iosClientId:
+        '507850657335-f6knolk41keva0b053ra871qui3teb8u.apps.googleusercontent.com'
+        ,});
   }, []);
 
   const handleGoogleSignIn = async () => {
