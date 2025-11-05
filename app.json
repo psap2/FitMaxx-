@@ -13,7 +13,13 @@
       "backgroundColor": "#ffffff"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.anonymous.fitmaxmobile",
+      "config": {
+        "googleSignIn": {
+          "reservedClientId": "com.googleusercontent.apps.507850657335-f6knolk41keva0b053ra871qui3teb8u"
+        }
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -21,10 +27,14 @@
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "package": "com.anonymous.fitmaxmobile"
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    }
+    },
+    "plugins": [
+      "expo-sqlite"
+    ]
   }
 }
