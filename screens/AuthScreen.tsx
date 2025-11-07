@@ -11,6 +11,8 @@ import {
   statusCodes,
 } from '@react-native-google-signin/google-signin';
 import { supabase } from '../utils/supabase';
+import { createUser } from '../backend/server/db/query';
+import { User } from '../backend/server/db/schema';
 
 type AuthScreenNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
@@ -56,6 +58,14 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ navigation, route }) => 
         Alert.alert('Sign-in failed', error.message);
       } else {
         console.log('Supabase user data:', data);
+        const user: User = {
+          id: data.user.id,
+          created_at: data.user.created_at,
+          email: data.user.email,
+          full_name: null,
+          avatar_url: null
+        };
+        await createUser(user);
         navigation.navigate('MainApp');
       }
     } catch (error: any) {
