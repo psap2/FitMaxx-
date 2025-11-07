@@ -5,6 +5,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { ProgressBar } from '../components/ProgressBar';
 import { RootStackParamList } from '../types';
+import { supabase } from '../utils/supabase';
+import { useEffect } from 'react';
 
 type GenderScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'Gender'>;
 
@@ -13,6 +15,17 @@ interface GenderScreenProps {
 }
 
 export const GenderScreen: React.FC<GenderScreenProps> = ({ navigation }) => {
+  useEffect(() => {
+    const checkUser = async () => {
+      const { data } = await supabase.auth.getSession();
+      if (data.session?.user) {
+        // User is already logged in, navigate to MainApp
+        navigation.replace('MainApp');
+      }
+    };
+    checkUser();
+  }, []);
+  
   const [selectedGender, setSelectedGender] = useState<'male' | 'female' | null>(null);
 
   const handleContinue = () => {
