@@ -1,7 +1,7 @@
 import { supabase } from "../../../utils/supabase";
 import { User } from "./schema";
 
-export const getUser = async (email: string) => {
+export const getUser = async (email: string | undefined) => {
     const { data, error } = await supabase.from('users').select('*').eq('email', email);
     if (error) {
         throw error;
