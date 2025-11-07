@@ -11,6 +11,8 @@ import {
   statusCodes,
 } from '@react-native-google-signin/google-signin';
 import { supabase } from '../utils/supabase';
+import { Platform } from "react-native";
+
 
 type AuthScreenNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
