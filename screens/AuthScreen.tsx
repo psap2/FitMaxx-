@@ -11,8 +11,9 @@ import {
   statusCodes,
 } from '@react-native-google-signin/google-signin';
 import { supabase } from '../utils/supabase';
-import { createUser, getUser } from '../backend/server/db/query';
+import { createUser, getUser, updateUser } from '../backend/server/db/query';
 import { User } from '../backend/server/db/schema';
+import { convertHeightToInches, convertWeightToLbs } from '../utils/conversionUtils';
 
 type AuthScreenNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
@@ -58,19 +59,89 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ navigation, route }) => 
         Alert.alert('Sign-in failed', error.message);
       } else {
         console.log('Supabase user data:', data);
+        
+        // Extract route params for gender, height, and weight
+        const routeParams = route.params;
+        const hasOnboardingData = routeParams?.gender && routeParams?.height && routeParams?.weight;
+        
         let isExistingUser = await getUser(data.user.email);
         if (isExistingUser.length > 0) {
+          // Existing user - update if onboarding data is available and fields are missing
+          if (hasOnboardingData) {
+            const existingUser = isExistingUser[0];
+            // Check if fields are missing (null, undefined, or 0 which indicates not set)
+            const needsUpdate = 
+              !existingUser.gender || 
+              existingUser.height === null || existingUser.height === undefined || existingUser.height === 0 ||
+              existingUser.weight === null || existingUser.weight === undefined || existingUser.weight === 0;
+            
+            if (needsUpdate) {
+              try {
+                const heightInches = convertHeightToInches(routeParams.height);
+                const weightLbs = convertWeightToLbs(routeParams.weight);
+                
+                // Validate converted values
+                if (isNaN(heightInches) || isNaN(weightLbs) || heightInches <= 0 || weightLbs <= 0) {
+                  console.error('Invalid conversion values:', { heightInches, weightLbs });
+                  throw new Error('Invalid height or weight values');
+                }
+                
+                await updateUser(data.user.id, {
+                  gender: routeParams.gender,
+                  height: Math.round(heightInches * 100) / 100, // Round to 2 decimal places
+                  weight: Math.round(weightLbs * 100) / 100, // Round to 2 decimal places
+                });
+              } catch (updateError: any) {
+                console.error('Error updating existing user:', updateError);
+                // Continue navigation even if update fails
+              }
+            }
+          }
           navigation.navigate('MainApp');
           return;
         }
+        
+        // New user - create user with onboarding data if available
+        let heightInches = 0;
+        let weightLbs = 0;
+        
+        if (hasOnboardingData) {
+          try {
+            heightInches = convertHeightToInches(routeParams.height);
+            weightLbs = convertWeightToLbs(routeParams.weight);
+            
+            // Validate converted values
+            if (isNaN(heightInches) || isNaN(weightLbs) || heightInches <= 0 || weightLbs <= 0) {
+              console.error('Invalid conversion values:', { heightInches, weightLbs });
+              throw new Error('Invalid height or weight values');
+            }
+          } catch (conversionError: any) {
+            console.error('Error converting height/weight:', conversionError);
+            // Use defaults if conversion fails
+            heightInches = 0;
+            weightLbs = 0;
+          }
+        }
+        
         const user: User = {
           id: data.user.id,
           created_at: data.user.created_at,
           email: data.user.email,
           full_name: null,
-          avatar_url: null
+          avatar_url: null,
+          gender: hasOnboardingData ? routeParams.gender : 'male', // Default to 'male' if not provided
+          height: hasOnboardingData && heightInches > 0 ? Math.round(heightInches * 100) / 100 : 0, // Default to 0 if not provided
+          weight: hasOnboardingData && weightLbs > 0 ? Math.round(weightLbs * 100) / 100 : 0, // Default to 0 if not provided
         };
-        await createUser(user);
+        
+        try {
+          await createUser(user);
+        } catch (createError: any) {
+          console.error('Error creating user:', createError);
+          Alert.alert('Error', 'Failed to create account. Please try again.');
+          return;
+        }
+        
         navigation.navigate('MainApp');
       }
     } catch (error: any) {

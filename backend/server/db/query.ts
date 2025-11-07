@@ -16,3 +16,11 @@ export const createUser = async (user: User) => {
     }
     return data;
 }
+
+export const updateUser = async (userId: string, updates: Partial<User>) => {
+    const { data, error } = await supabase.from('users').update(updates).eq('id', userId);
+    if (error) {
+        throw error;
+    }
+    return data;
+}
