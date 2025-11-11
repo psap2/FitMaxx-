@@ -5,6 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RouteProp } from '@react-navigation/native';
 import { ProgressBar } from '../components/ProgressBar';
+import { fonts } from '../theme/fonts';
 import { RootStackParamList } from '../types';
 
 type WeightScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'Weight'>;
@@ -99,7 +100,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 32,
-    fontWeight: 'bold',
+    fontFamily: fonts.bold,
     color: '#fff',
     textAlign: 'center',
     marginBottom: 12,
@@ -131,7 +132,7 @@ const styles = StyleSheet.create({
   unitText: {
     fontSize: 16,
     color: 'rgba(255, 255, 255, 0.6)',
-    fontWeight: '600',
+    fontFamily: fonts.bold,
   },
   unitTextActive: {
     color: '#fff',
@@ -144,7 +145,7 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     padding: 20,
     fontSize: 64,
-    fontWeight: 'bold',
+    fontFamily: fonts.bold,
     color: '#FF6B35',
     textAlign: 'center',
     width: '100%',
@@ -175,6 +176,6 @@ const styles = StyleSheet.create({
   continueText: {
     color: '#fff',
     fontSize: 18,
-    fontWeight: 'bold',
+    fontFamily: fonts.bold,
   },
 });

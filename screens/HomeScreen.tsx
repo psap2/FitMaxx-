@@ -16,6 +16,7 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { GlassCard } from '../components/GlassCard';
 import { analyzePhysique } from '../api';
 import { RootStackParamList } from '../types';
+import { fonts } from '../theme/fonts';
 
 type HomeScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'Home'>;
 
@@ -183,7 +184,7 @@ const styles = StyleSheet.create({
   },
   logo: {
     fontSize: 48,
-    fontWeight: 'bold',
+    fontFamily: fonts.bold,
     color: '#fff',
     letterSpacing: 2,
   },
@@ -253,7 +254,7 @@ const styles = StyleSheet.create({
   buttonText: {
     color: '#fff',
     fontSize: 16,
-    fontWeight: '600',
+    fontFamily: fonts.bold,
   },
   analyzeButton: {
     borderRadius: 20,
@@ -270,6 +271,6 @@ const styles = StyleSheet.create({
   analyzeText: {
     color: '#fff',
     fontSize: 20,
-    fontWeight: 'bold',
+    fontFamily: fonts.bold,
   },
 });

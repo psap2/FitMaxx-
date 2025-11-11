@@ -13,6 +13,7 @@ import { RootStackParamList } from '../types';
 import ScanScreen from './ScanScreen';
 import ExtrasScreen from './ExtrasScreen';
 import CoachScreen from './CoachScreen';
+import { fonts } from '../theme/fonts';
 
 type MainAppScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'MainApp'>;
 
@@ -128,10 +129,10 @@ const styles = StyleSheet.create({
     color: 'rgba(255, 255, 255, 0.5)',
     fontSize: 12,
     marginTop: 4,
-    fontWeight: '500',
+    fontFamily: fonts.regular,
   },
   activeNavText: {
     color: '#FF6B35',
-    fontWeight: '600',
+    fontFamily: fonts.bold,
   },
 });

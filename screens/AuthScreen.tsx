@@ -5,6 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RouteProp } from '@react-navigation/native';
 import { ProgressBar } from '../components/ProgressBar';
+import { fonts } from '../theme/fonts';
 import { RootStackParamList } from '../types';
 import {
   GoogleSignin,
@@ -88,8 +89,8 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ navigation, route }) => 
                 
                 await updateUser(data.user.id, {
                   gender: routeParams.gender,
-                  height: Math.round(heightInches * 100) / 100, // Round to 2 decimal places
-                  weight: Math.round(weightLbs * 100) / 100, // Round to 2 decimal places
+                  height: Math.round(heightInches),
+                  weight: Math.round(weightLbs),
                 });
               } catch (updateError: any) {
                 console.error('Error updating existing user:', updateError);
@@ -130,8 +131,8 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ navigation, route }) => 
           full_name: null,
           avatar_url: null,
           gender: hasOnboardingData ? routeParams.gender : 'male', // Default to 'male' if not provided
-          height: hasOnboardingData && heightInches > 0 ? Math.round(heightInches * 100) / 100 : 0, // Default to 0 if not provided
-          weight: hasOnboardingData && weightLbs > 0 ? Math.round(weightLbs * 100) / 100 : 0, // Default to 0 if not provided
+          height: hasOnboardingData && heightInches > 0 ? Math.round(heightInches) : 0, // Default to 0 if not provided
+          weight: hasOnboardingData && weightLbs > 0 ? Math.round(weightLbs) : 0, // Default to 0 if not provided
         };
         
         try {
@@ -219,7 +220,7 @@ const styles = StyleSheet.create({
   },
   logo: {
     fontSize: 56,
-    fontWeight: 'bold',
+    fontFamily: fonts.bold,
     color: '#fff',
     letterSpacing: 2,
   },
@@ -234,7 +235,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 28,
-    fontWeight: 'bold',
+    fontFamily: fonts.bold,
     color: '#fff',
     textAlign: 'center',
     marginBottom: 12,
@@ -268,7 +269,7 @@ const styles = StyleSheet.create({
   authButtonText: {
     color: '#fff',
     fontSize: 18,
-    fontWeight: '600',
+    fontFamily: fonts.bold,
   },
   terms: {
     fontSize: 14,

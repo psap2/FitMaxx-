@@ -14,6 +14,7 @@ import { RouteProp } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { GlassCard } from '../components/GlassCard';
 import { RootStackParamList } from '../types';
+import { fonts } from '../theme/fonts';
 
 type ResultsScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'Results'>;
 type ResultsScreenRouteProp = RouteProp<RootStackParamList, 'Results'>;
@@ -186,7 +187,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 24,
-    fontWeight: 'bold',
+    fontFamily: fonts.bold,
     color: '#fff',
     textAlign: 'center',
     marginBottom: 20,
@@ -220,12 +221,12 @@ const styles = StyleSheet.create({
   ratingLabel: {
     fontSize: 16,
     color: '#fff',
-    fontWeight: '600',
+    fontFamily: fonts.bold,
     marginBottom: 8,
   },
   ratingValue: {
     fontSize: 24,
-    fontWeight: 'bold',
+    fontFamily: fonts.bold,
     marginBottom: 8,
   },
   progressBarContainer: {
@@ -243,7 +244,7 @@ const styles = StyleSheet.create({
   },
   suggestionsTitle: {
     fontSize: 20,
-    fontWeight: 'bold',
+    fontFamily: fonts.bold,
     color: '#fff',
     marginBottom: 15,
   },
@@ -257,7 +258,7 @@ const styles = StyleSheet.create({
   },
   suggestionTitle: {
     fontSize: 18,
-    fontWeight: 'bold',
+    fontFamily: fonts.bold,
     color: '#fff',
     marginLeft: 10,
   },
@@ -301,6 +302,6 @@ const styles = StyleSheet.create({
   buttonText: {
     color: '#fff',
     fontSize: 16,
-    fontWeight: '600',
+    fontFamily: fonts.bold,
   },
 });

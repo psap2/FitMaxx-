@@ -11,6 +11,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../types';
+import { fonts } from '../theme/fonts';
 
 type ScanScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'Scan'>;
 
@@ -72,7 +73,7 @@ const styles = StyleSheet.create({
   },
   logo: {
     fontSize: 48,
-    fontWeight: 'bold',
+    fontFamily: fonts.bold,
     color: '#fff',
     letterSpacing: 2,
   },
@@ -121,7 +122,7 @@ const styles = StyleSheet.create({
   buttonText: {
     color: '#fff',
     fontSize: 20,
-    fontWeight: 'bold',
+    fontFamily: fonts.bold,
   },
   infoContainer: {
     alignItems: 'center',

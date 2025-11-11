@@ -1,7 +1,13 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { StatusBar } from 'expo-status-bar';
+import { Text } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import {
+  useFonts,
+  Exo2_400Regular,
+  Exo2_700Bold,
+} from '@expo-google-fonts/exo-2';
 import { GenderScreen } from './screens/GenderScreen';
 import { HeightScreen } from './screens/HeightScreen';
 import { WeightScreen } from './screens/WeightScreen';
@@ -16,6 +22,30 @@ import { RootStackParamList } from './types';
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
 export default function App() {
+  const [fontsLoaded] = useFonts({
+    Exo2_400Regular,
+    Exo2_700Bold,
+  });
+
+  useEffect(() => {
+    if (!fontsLoaded) {
+      return;
+    }
+
+    if (!Text.defaultProps) {
+      Text.defaultProps = {};
+    }
+
+    Text.defaultProps.style = {
+      ...(Text.defaultProps.style ?? {}),
+      fontFamily: 'Exo2_400Regular',
+    };
+  }, [fontsLoaded]);
+
+  if (!fontsLoaded) {
+    return null;
+  }
+
   return (
     <NavigationContainer>
       <StatusBar style="light" />

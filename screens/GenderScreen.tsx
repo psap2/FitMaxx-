@@ -7,6 +7,7 @@ import { ProgressBar } from '../components/ProgressBar';
 import { RootStackParamList } from '../types';
 import { supabase } from '../utils/supabase';
 import { useEffect } from 'react';
+import { fonts } from '../theme/fonts';
 
 type GenderScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'Gender'>;
 
@@ -101,7 +102,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 32,
-    fontWeight: 'bold',
+    fontFamily: fonts.bold,
     color: '#fff',
     textAlign: 'center',
     marginBottom: 12,
@@ -134,7 +135,7 @@ const styles = StyleSheet.create({
     fontSize: 20,
     color: 'rgba(255, 255, 255, 0.6)',
     marginTop: 16,
-    fontWeight: '600',
+    fontFamily: fonts.bold,
   },
   optionTextSelected: {
     color: '#fff',
@@ -158,6 +159,6 @@ const styles = StyleSheet.create({
   continueText: {
     color: '#fff',
     fontSize: 18,
-    fontWeight: 'bold',
+    fontFamily: fonts.bold,
   },
 });

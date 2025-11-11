@@ -6,6 +6,7 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RouteProp } from '@react-navigation/native';
 import { ProgressBar } from '../components/ProgressBar';
 import { RootStackParamList } from '../types';
+import { fonts } from '../theme/fonts';
 
 type ReferralScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'Referral'>;
 type ReferralScreenRouteProp = RouteProp<RootStackParamList, 'Referral'>;
@@ -90,7 +91,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 32,
-    fontWeight: 'bold',
+    fontFamily: fonts.bold,
     color: '#fff',
     textAlign: 'center',
     marginBottom: 12,
@@ -106,7 +107,7 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     padding: 20,
     fontSize: 20,
-    fontWeight: '600',
+    fontFamily: fonts.bold,
     color: '#fff',
     textAlign: 'center',
     borderWidth: 2,
@@ -139,6 +140,6 @@ const styles = StyleSheet.create({
   continueText: {
     color: '#fff',
     fontSize: 18,
-    fontWeight: 'bold',
+    fontFamily: fonts.bold,
   },
 });

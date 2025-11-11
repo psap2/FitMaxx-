@@ -6,6 +6,7 @@ import {
   Dimensions,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { fonts } from '../theme/fonts';
 
 const { width, height } = Dimensions.get('window');
 
@@ -65,7 +66,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 32,
-    fontWeight: 'bold',
+    fontFamily: fonts.bold,
     color: '#fff',
     marginBottom: 16,
   },
@@ -93,6 +94,6 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
     marginLeft: 16,
-    fontWeight: '500',
+    fontFamily: fonts.regular,
   },
 });
