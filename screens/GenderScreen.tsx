@@ -19,9 +19,32 @@ export const GenderScreen: React.FC<GenderScreenProps> = ({ navigation }) => {
   useEffect(() => {
     const checkUser = async () => {
       const { data } = await supabase.auth.getSession();
-      if (data.session?.user) {
-        // User is already logged in, navigate to MainApp
-        navigation.replace('MainApp');
+      const sessionUser = data.session?.user;
+      if (sessionUser) {
+        const { data: userRecord, error } = await supabase
+          .from('users')
+          .select('gender,height,weight')
+          .eq('id', sessionUser.id)
+          .maybeSingle();
+
+        if (error) {
+          console.error('Error fetching user record:', error);
+          await supabase.auth.signOut();
+          return;
+        }
+
+        if (
+          userRecord &&
+          userRecord.gender &&
+          userRecord.height &&
+          userRecord.weight &&
+          userRecord.height > 0 &&
+          userRecord.weight > 0
+        ) {
+          navigation.replace('MainApp');
+        } else {
+          await supabase.auth.signOut();
+        }
       }
     };
     checkUser();

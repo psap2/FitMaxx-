@@ -31,12 +31,14 @@ export type RootStackParamList = {
     weight: { value: number; unit: 'lbs' | 'kg' };
     referralCode?: string;
   };
-  Auth: {
-    gender: 'male' | 'female';
-    height: { feet: number; inches: number } | { cm: number };
-    weight: { value: number; unit: 'lbs' | 'kg' };
-    referralCode?: string;
-  };
+  Auth:
+    | {
+        gender: 'male' | 'female';
+        height: { feet: number; inches: number } | { cm: number };
+        weight: { value: number; unit: 'lbs' | 'kg' };
+        referralCode?: string;
+      }
+    | undefined;
   MainApp: undefined;
   Scan: undefined;
   Extras: undefined;

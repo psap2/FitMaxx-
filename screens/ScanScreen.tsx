@@ -4,24 +4,20 @@ import {
   Text,
   StyleSheet,
   TouchableOpacity,
-  Image,
   Dimensions,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useNavigation } from '@react-navigation/native';
 import { RootStackParamList } from '../types';
 import { fonts } from '../theme/fonts';
 
-type ScanScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'Scan'>;
-
-interface ScanScreenProps {
-  navigation: ScanScreenNavigationProp;
-}
-
 const { width, height } = Dimensions.get('window');
 
-export default function ScanScreen({ navigation }: ScanScreenProps) {
+export default function ScanScreen() {
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+
   const handleBeginScan = () => {
     navigation.navigate('Home');
   };

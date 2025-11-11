@@ -39,6 +39,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ navigation, route }) => 
 
   const handleGoogleSignIn = async () => {
     try {
+      await GoogleSignin.signOut(); // Let's have it where there is no remembering of the user's sign in (from Dan)
       await GoogleSignin.hasPlayServices();
       const response = await GoogleSignin.signIn();
 
@@ -67,26 +68,27 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ navigation, route }) => 
         
         let isExistingUser = await getUser(data.user.email);
         if (isExistingUser.length > 0) {
-          // Existing user - update if onboarding data is available and fields are missing
-          if (hasOnboardingData) {
-            const existingUser = isExistingUser[0];
-            // Check if fields are missing (null, undefined, or 0 which indicates not set)
-            const needsUpdate = 
-              !existingUser.gender || 
-              existingUser.height === null || existingUser.height === undefined || existingUser.height === 0 ||
-              existingUser.weight === null || existingUser.weight === undefined || existingUser.weight === 0;
-            
-            if (needsUpdate) {
+          const existingUser = isExistingUser[0];
+          const needsOnboarding =
+            !existingUser.gender ||
+            existingUser.height === null ||
+            existingUser.height === undefined ||
+            existingUser.height === 0 ||
+            existingUser.weight === null ||
+            existingUser.weight === undefined ||
+            existingUser.weight === 0;
+
+          if (needsOnboarding) {
+            if (hasOnboardingData) {
               try {
                 const heightInches = convertHeightToInches(routeParams.height);
                 const weightLbs = convertWeightToLbs(routeParams.weight);
-                
-                // Validate converted values
+
                 if (isNaN(heightInches) || isNaN(weightLbs) || heightInches <= 0 || weightLbs <= 0) {
                   console.error('Invalid conversion values:', { heightInches, weightLbs });
                   throw new Error('Invalid height or weight values');
                 }
-                
+
                 await updateUser(data.user.id, {
                   gender: routeParams.gender,
                   height: Math.round(heightInches),
@@ -94,45 +96,76 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ navigation, route }) => 
                 });
               } catch (updateError: any) {
                 console.error('Error updating existing user:', updateError);
-                // Continue navigation even if update fails
               }
+            } else {
+              await supabase.auth.signOut();
+              await GoogleSignin.signOut();
+              Alert.alert(
+                'Complete Your Profile',
+                'We need a few details before you can continue. Please finish the onboarding steps.'
+              );
+              navigation.reset({
+                index: 0,
+                routes: [{ name: 'Gender' }],
+              });
+              return;
             }
           }
+
           navigation.navigate('MainApp');
           return;
         }
         
-        // New user - create user with onboarding data if available
+        // New user handling
+        if (!hasOnboardingData) {
+          await supabase.auth.signOut();
+          await GoogleSignin.signOut();
+          Alert.alert(
+            'Finish Setup',
+            'Please complete the onboarding steps before signing in.'
+          );
+          navigation.reset({
+            index: 0,
+            routes: [{ name: 'Gender' }],
+          });
+          return;
+        }
+
         let heightInches = 0;
         let weightLbs = 0;
-        
-        if (hasOnboardingData) {
-          try {
-            heightInches = convertHeightToInches(routeParams.height);
-            weightLbs = convertWeightToLbs(routeParams.weight);
-            
-            // Validate converted values
-            if (isNaN(heightInches) || isNaN(weightLbs) || heightInches <= 0 || weightLbs <= 0) {
-              console.error('Invalid conversion values:', { heightInches, weightLbs });
-              throw new Error('Invalid height or weight values');
-            }
-          } catch (conversionError: any) {
-            console.error('Error converting height/weight:', conversionError);
-            // Use defaults if conversion fails
-            heightInches = 0;
-            weightLbs = 0;
+
+        try {
+          heightInches = convertHeightToInches(routeParams.height);
+          weightLbs = convertWeightToLbs(routeParams.weight);
+
+          if (isNaN(heightInches) || isNaN(weightLbs) || heightInches <= 0 || weightLbs <= 0) {
+            console.error('Invalid conversion values:', { heightInches, weightLbs });
+            throw new Error('Invalid height or weight values');
           }
+        } catch (conversionError: any) {
+          console.error('Error converting height/weight:', conversionError);
+          await supabase.auth.signOut();
+          await GoogleSignin.signOut();
+          Alert.alert(
+            'Invalid Data',
+            'We had trouble processing your height or weight. Please try again.'
+          );
+          navigation.reset({
+            index: 0,
+            routes: [{ name: 'Gender' }],
+          });
+          return;
         }
-        
+
         const user: User = {
           id: data.user.id,
           created_at: data.user.created_at,
           email: data.user.email,
           full_name: null,
           avatar_url: null,
-          gender: hasOnboardingData ? routeParams.gender : 'male', // Default to 'male' if not provided
-          height: hasOnboardingData && heightInches > 0 ? Math.round(heightInches) : 0, // Default to 0 if not provided
-          weight: hasOnboardingData && weightLbs > 0 ? Math.round(weightLbs) : 0, // Default to 0 if not provided
+          gender: routeParams.gender,
+          height: Math.round(heightInches),
+          weight: Math.round(weightLbs),
         };
         
         try {

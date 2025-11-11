@@ -1,19 +1,23 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   TouchableOpacity,
   Dimensions,
+  Modal,
+  TouchableWithoutFeedback,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../types';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import ScanScreen from './ScanScreen';
 import ExtrasScreen from './ExtrasScreen';
 import CoachScreen from './CoachScreen';
 import { fonts } from '../theme/fonts';
+import { supabase } from '../utils/supabase';
 
 type MainAppScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'MainApp'>;
 
@@ -25,17 +29,53 @@ const { width, height } = Dimensions.get('window');
 
 export const MainAppScreen: React.FC<MainAppScreenProps> = ({ navigation }) => {
   const [activeTab, setActiveTab] = useState<'scan' | 'extras' | 'coach'>('scan');
+  const [settingsVisible, setSettingsVisible] = useState(false);
+  const [userEmail, setUserEmail] = useState<string | undefined>(undefined);
+  const insets = useSafeAreaInsets();
 
   const renderContent = () => {
     switch (activeTab) {
       case 'scan':
-        return <ScanScreen navigation={navigation} />;
+        return <ScanScreen />;
       case 'extras':
         return <ExtrasScreen />;
       case 'coach':
         return <CoachScreen />;
       default:
-        return <ScanScreen navigation={navigation} />;
+        return <ScanScreen />;
+    }
+  };
+
+  useEffect(() => {
+    const fetchSession = async () => {
+      const { data } = await supabase.auth.getSession();
+      setUserEmail(data.session?.user?.email);
+    };
+
+    fetchSession();
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUserEmail(session?.user?.email);
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, []);
+
+  const handleLogout = async () => {
+    try {
+      await supabase.auth.signOut();
+    } catch (error) {
+      console.error('Error signing out:', error);
+    } finally {
+      setSettingsVisible(false);
+      navigation.reset({
+        index: 0,
+        routes: [{ name: 'Auth' }],
+      });
     }
   };
 
@@ -93,6 +133,53 @@ export const MainAppScreen: React.FC<MainAppScreenProps> = ({ navigation }) => {
           </TouchableOpacity>
         </View>
       </LinearGradient>
+
+      <View
+        style={[
+          styles.headerOverlay,
+          { top: insets.top + 8, right: 20 },
+        ]}
+        pointerEvents="box-none"
+      >
+        {!!userEmail && <Text style={styles.headerEmail}>{userEmail}</Text>}
+        <TouchableOpacity
+          style={styles.settingsButton}
+          onPress={() => setSettingsVisible(true)}
+          accessibilityRole="button"
+          accessibilityLabel="Open settings"
+        >
+          <Ionicons name="settings-outline" size={22} color="#fff" />
+        </TouchableOpacity>
+      </View>
+
+      <Modal
+        visible={settingsVisible}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setSettingsVisible(false)}
+      >
+        <TouchableWithoutFeedback onPress={() => setSettingsVisible(false)}>
+          <View style={styles.modalOverlay} />
+        </TouchableWithoutFeedback>
+        <View style={styles.bottomSheet}>
+          <View style={styles.sheetHandle} />
+          <Text style={styles.sheetTitle}>Settings</Text>
+          {!!userEmail && <Text style={styles.sheetSubtitle}>{userEmail}</Text>}
+          <TouchableOpacity
+            style={styles.logoutButton}
+            onPress={handleLogout}
+          >
+            <Ionicons name="log-out-outline" size={20} color="#fff" />
+            <Text style={styles.logoutText}>Log Out</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.sheetCancel}
+            onPress={() => setSettingsVisible(false)}
+          >
+            <Text style={styles.sheetCancelText}>Cancel</Text>
+          </TouchableOpacity>
+        </View>
+      </Modal>
     </View>
   );
 };
@@ -106,6 +193,14 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
+  },
+  settingsButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
   },
   bottomNav: {
     flexDirection: 'row',
@@ -134,5 +229,75 @@ const styles = StyleSheet.create({
   activeNavText: {
     color: '#FF6B35',
     fontFamily: fonts.bold,
+  },
+  headerOverlay: {
+    position: 'absolute',
+    alignItems: 'flex-end',
+    gap: 6,
+    zIndex: 20,
+  },
+  headerEmail: {
+    color: 'rgba(255, 255, 255, 0.7)',
+    fontSize: 12,
+    fontFamily: fonts.regular,
+    marginBottom: 4,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.4)',
+  },
+  bottomSheet: {
+    backgroundColor: '#111',
+    paddingHorizontal: 20,
+    paddingTop: 16,
+    paddingBottom: 34,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+  },
+  sheetHandle: {
+    alignSelf: 'center',
+    width: 40,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: 'rgba(255, 255, 255, 0.3)',
+    marginBottom: 12,
+  },
+  sheetTitle: {
+    fontSize: 20,
+    color: '#fff',
+    fontFamily: fonts.bold,
+    textAlign: 'center',
+  },
+  sheetSubtitle: {
+    fontSize: 14,
+    color: 'rgba(255, 255, 255, 0.6)',
+    textAlign: 'center',
+    marginTop: 4,
+    marginBottom: 16,
+    fontFamily: fonts.regular,
+  },
+  logoutButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    backgroundColor: '#FF6B35',
+    paddingVertical: 14,
+    justifyContent: 'center',
+    borderRadius: 16,
+    marginBottom: 12,
+  },
+  logoutText: {
+    color: '#fff',
+    fontSize: 16,
+    fontFamily: fonts.bold,
+  },
+  sheetCancel: {
+    paddingVertical: 12,
+    alignItems: 'center',
+  },
+  sheetCancelText: {
+    color: 'rgba(255, 255, 255, 0.7)',
+    fontSize: 15,
+    fontFamily: fonts.regular,
   },
 });
