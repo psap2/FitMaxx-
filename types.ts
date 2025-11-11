@@ -45,4 +45,5 @@ export type RootStackParamList = {
   Coach: undefined;
   Home: undefined;
   Results: { analysis: PhysiqueAnalysis; imageUri: string };
+  EditProfile: undefined;
 };

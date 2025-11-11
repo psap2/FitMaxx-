@@ -17,6 +17,7 @@ import { AuthScreen } from './screens/AuthScreen';
 import { MainAppScreen } from './screens/MainAppScreen';
 import { HomeScreen } from './screens/HomeScreen';
 import { ResultsScreen } from './screens/ResultsScreen';
+import { EditProfileScreen } from './screens/EditProfileScreen';
 import { RootStackParamList } from './types';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -32,13 +33,13 @@ export default function App() {
       return;
     }
 
-    if (!Text.defaultProps) {
-      Text.defaultProps = {};
-    }
-
-    Text.defaultProps.style = {
-      ...(Text.defaultProps.style ?? {}),
-      fontFamily: 'Exo2_400Regular',
+    const textComponent = Text as typeof Text & { defaultProps?: any };
+    textComponent.defaultProps = {
+      ...(textComponent.defaultProps ?? {}),
+      style: {
+        ...(textComponent.defaultProps?.style ?? {}),
+        fontFamily: 'Exo2_400Regular',
+      },
     };
   }, [fontsLoaded]);
 
@@ -72,6 +73,7 @@ export default function App() {
         />
         <Stack.Screen name="Home" component={HomeScreen} />
         <Stack.Screen name="Results" component={ResultsScreen} />
+        <Stack.Screen name="EditProfile" component={EditProfileScreen} />
       </Stack.Navigator>
     </NavigationContainer>
   );

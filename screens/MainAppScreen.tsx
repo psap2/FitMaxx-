@@ -166,6 +166,16 @@ export const MainAppScreen: React.FC<MainAppScreenProps> = ({ navigation }) => {
           <Text style={styles.sheetTitle}>Settings</Text>
           {!!userEmail && <Text style={styles.sheetSubtitle}>{userEmail}</Text>}
           <TouchableOpacity
+            style={styles.sheetButton}
+            onPress={() => {
+              setSettingsVisible(false);
+              navigation.navigate('EditProfile');
+            }}
+          >
+            <Ionicons name="create-outline" size={20} color="#fff" />
+            <Text style={styles.sheetButtonText}>Edit Profile</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
             style={styles.logoutButton}
             onPress={handleLogout}
           >
@@ -287,6 +297,21 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   logoutText: {
+    color: '#fff',
+    fontSize: 16,
+    fontFamily: fonts.bold,
+  },
+  sheetButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    paddingVertical: 14,
+    justifyContent: 'center',
+    borderRadius: 16,
+    marginBottom: 12,
+  },
+  sheetButtonText: {
     color: '#fff',
     fontSize: 16,
     fontFamily: fonts.bold,
