@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, TextInput, Keyboard, TouchableWithoutFeedback } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, TextInput, Keyboard, TouchableWithoutFeedback, Alert } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -19,6 +19,22 @@ interface WeightScreenProps {
 export const WeightScreen: React.FC<WeightScreenProps> = ({ navigation, route }) => {
   const [unit, setUnit] = useState<'lbs' | 'kg'>('lbs');
   const [weight, setWeight] = useState('');
+  const [hasShownInvalidInput, setHasShownInvalidInput] = useState(false);
+  const handleWeightInput = (value: string) => {
+    const sanitized = value.replace(/[^0-9]/g, '');
+
+    if (value !== sanitized && !hasShownInvalidInput) {
+      Alert.alert('Numbers Only', 'Please enter numeric values for your weight.');
+      setHasShownInvalidInput(true);
+    }
+
+    if (hasShownInvalidInput && sanitized.length === 0) {
+      setHasShownInvalidInput(false);
+    }
+
+    setWeight(sanitized);
+  };
+
 
   const isValid = weight !== '';
 
@@ -62,7 +78,7 @@ export const WeightScreen: React.FC<WeightScreenProps> = ({ navigation, route })
               placeholderTextColor="rgba(255, 255, 255, 0.3)"
               keyboardType="number-pad"
               value={weight}
-              onChangeText={setWeight}
+              onChangeText={handleWeightInput}
               maxLength={3}
               returnKeyType="done"
               onSubmitEditing={Keyboard.dismiss}
