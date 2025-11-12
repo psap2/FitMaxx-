@@ -31,7 +31,7 @@ interface ResultsScreenProps {
 const { width } = Dimensions.get('window');
 
 export const ResultsScreen: React.FC<ResultsScreenProps> = ({ navigation, route }) => {
-  const { analysis, imageUri } = route.params;
+  const { analysis, imageUri, allowSave = true } = route.params;
   const [isSaving, setIsSaving] = useState(false);
   const uploadImage = useCallback(async (uri: string, userId: string) => {
     const response = await fetch(uri);
@@ -51,12 +51,19 @@ export const ResultsScreen: React.FC<ResultsScreenProps> = ({ navigation, route 
       throw error;
     }
 
-    const { data } = supabase.storage.from('images').getPublicUrl(filePath);
-    return { publicUrl: data.publicUrl, storagePath: filePath };
+    const { data, error: signedError } = await supabase.storage
+      .from('images')
+      .createSignedUrl(filePath, 60 * 60 * 24 * 7);
+
+    if (signedError || !data?.signedUrl) {
+      throw signedError ?? new Error('Failed to create signed URL');
+    }
+
+    return { signedUrl: data.signedUrl, storagePath: filePath };
   }, []);
 
   const handleSave = useCallback(async () => {
-    if (isSaving) {
+    if (isSaving || !allowSave) {
       return;
     }
 
@@ -75,7 +82,7 @@ export const ResultsScreen: React.FC<ResultsScreenProps> = ({ navigation, route 
 
       try {
         const uploadResult = await uploadImage(imageUri, userId);
-        publicUrl = uploadResult.publicUrl;
+        publicUrl = uploadResult.signedUrl;
         storagePath = uploadResult.storagePath;
       } catch (uploadError) {
         console.error('Failed to upload image:', uploadError);
@@ -88,17 +95,12 @@ export const ResultsScreen: React.FC<ResultsScreenProps> = ({ navigation, route 
 
       await createPost({
         user_id: userId,
-        image_url: publicUrl,
+        image_url: storagePath ?? '',
         overall_rating: toStoredScore(analysis.overallRating * 10),
         potential: toStoredScore(analysis.potential * 10),
         body_fat: toStoredScore(analysis.bodyFatPercentage * 10),
         symmetry: toStoredScore(analysis.symmetry * 10),
         summaryrecc: analysis.summaryRecommendation,
-      });
-
-      navigation.setParams({
-        analysis,
-        imageUri: publicUrl,
       });
 
       Alert.alert('Saved', 'Your analysis has been saved to your progress.');
@@ -146,11 +148,11 @@ export const ResultsScreen: React.FC<ResultsScreenProps> = ({ navigation, route 
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
         <View style={styles.content}>
           <TouchableOpacity
-            style={styles.backButton}
-            onPress={() => navigation.goBack()}
-          >
-            <Ionicons name="arrow-back" size={24} color="#fff" />
-          </TouchableOpacity>
+        style={styles.backButton}
+        onPress={() => navigation.goBack()}
+      >
+        <Ionicons name="arrow-back" size={24} color="#fff" />
+      </TouchableOpacity>
 
           <Text style={styles.title}>Analysis Summary</Text>
 
@@ -208,53 +210,57 @@ export const ResultsScreen: React.FC<ResultsScreenProps> = ({ navigation, route 
             </View>
           )}
 
-          <View style={styles.suggestionsContainer}>
-            <Text style={styles.suggestionsTitle}>Suggestions</Text>
-            
-            <GlassCard style={styles.suggestionCard}>
-              <View style={styles.suggestionHeader}>
-                <Ionicons name="star" size={20} color="#FF6B35" />
-                <Text style={styles.suggestionTitle}>Strengths</Text>
-              </View>
-              {analysis.strengths.map((strength, index) => (
-                <View key={index} style={styles.suggestionItem}>
-                  <View style={styles.suggestionBullet} />
-                  <Text style={styles.suggestionText}>{strength}</Text>
+          {allowSave && (
+            <View style={styles.suggestionsContainer}>
+              <Text style={styles.suggestionsTitle}>Suggestions</Text>
+              
+              <GlassCard style={styles.suggestionCard}>
+                <View style={styles.suggestionHeader}>
+                  <Ionicons name="star" size={20} color="#FF6B35" />
+                  <Text style={styles.suggestionTitle}>Strengths</Text>
                 </View>
-              ))}
-            </GlassCard>
+                {analysis.strengths.map((strength, index) => (
+                  <View key={index} style={styles.suggestionItem}>
+                    <View style={styles.suggestionBullet} />
+                    <Text style={styles.suggestionText}>{strength}</Text>
+                  </View>
+                ))}
+              </GlassCard>
 
-            <GlassCard style={styles.suggestionCard}>
-              <View style={styles.suggestionHeader}>
-                <Ionicons name="trending-up" size={20} color="#FF6B35" />
-                <Text style={styles.suggestionTitle}>Areas to Improve</Text>
-              </View>
-              {analysis.improvements.map((improvement, index) => (
-                <View key={index} style={styles.suggestionItem}>
-                  <View style={styles.suggestionBullet} />
-                  <Text style={styles.suggestionText}>{improvement}</Text>
+              <GlassCard style={styles.suggestionCard}>
+                <View style={styles.suggestionHeader}>
+                  <Ionicons name="trending-up" size={20} color="#FF6B35" />
+                  <Text style={styles.suggestionTitle}>Areas to Improve</Text>
                 </View>
-              ))}
-            </GlassCard>
-          </View>
+                {analysis.improvements.map((improvement, index) => (
+                  <View key={index} style={styles.suggestionItem}>
+                    <View style={styles.suggestionBullet} />
+                    <Text style={styles.suggestionText}>{improvement}</Text>
+                  </View>
+                ))}
+              </GlassCard>
+            </View>
+          )}
 
           <View style={styles.buttonContainer}>
-          <TouchableOpacity
-            style={styles.actionButton}
-            onPress={handleSave}
-            disabled={isSaving}
-          >
-            <LinearGradient colors={['#FF6B35', '#FF8C42']} style={styles.buttonGradient}>
-              {isSaving ? (
-                <ActivityIndicator color="#fff" size="small" />
-              ) : (
-                <>
-                  <Ionicons name="save" size={20} color="#fff" />
-                  <Text style={styles.buttonText}>Save</Text>
-                </>
-              )}
-            </LinearGradient>
-          </TouchableOpacity>
+            {allowSave && (
+              <TouchableOpacity
+                style={styles.actionButton}
+                onPress={handleSave}
+                disabled={isSaving}
+              >
+                <LinearGradient colors={['#FF6B35', '#FF8C42']} style={styles.buttonGradient}>
+                  {isSaving ? (
+                    <ActivityIndicator color="#fff" size="small" />
+                  ) : (
+                    <>
+                      <Ionicons name="save" size={20} color="#fff" />
+                      <Text style={styles.buttonText}>Save</Text>
+                    </>
+                  )}
+                </LinearGradient>
+              </TouchableOpacity>
+            )}
 
             <TouchableOpacity
               style={styles.actionButton}

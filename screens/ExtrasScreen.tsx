@@ -4,40 +4,45 @@ import {
   Text,
   StyleSheet,
   Dimensions,
+  TouchableOpacity,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { fonts } from '../theme/fonts';
+import { RootStackParamList } from '../types';
 
 const { width, height } = Dimensions.get('window');
 
+type ExtrasNavigationProp = NativeStackNavigationProp<RootStackParamList>;
+
 export default function ExtrasScreen() {
+  const navigation = useNavigation<ExtrasNavigationProp>();
+
   return (
     <View style={styles.container}>
       <View style={styles.content}>
         <View style={styles.iconContainer}>
-          <Ionicons name="ellipsis-horizontal" size={80} color="rgba(255, 107, 53, 0.3)" />
+          <Ionicons name="trending-up" size={80} color="rgba(255, 107, 53, 0.3)" />
         </View>
         
-        <Text style={styles.title}>Coming Soon</Text>
+        <Text style={styles.title}>Tracking</Text>
         <Text style={styles.subtitle}>
-          We're working on exciting new features for you!
+          Check out these extra features.
         </Text>
         
         <View style={styles.featuresContainer}>
-          <View style={styles.featureItem}>
-            <Ionicons name="trending-up" size={24} color="#FF6B35" />
-            <Text style={styles.featureText}>Progress Tracking</Text>
-          </View>
-          
-          <View style={styles.featureItem}>
-            <Ionicons name="people" size={24} color="#FF6B35" />
-            <Text style={styles.featureText}>Community Features</Text>
-          </View>
-          
-          <View style={styles.featureItem}>
-            <Ionicons name="trophy" size={24} color="#FF6B35" />
-            <Text style={styles.featureText}>Achievements</Text>
-          </View>
+          <TouchableOpacity
+            style={styles.featureItem}
+            onPress={() => navigation.navigate('Gallery')}
+          >
+            <View style={styles.featureLeft}>
+              <Ionicons name="trending-up" size={24} color="#FF6B35" />
+              <Text style={styles.featureText}>Progress Tracking</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={18} color="rgba(255, 255, 255, 0.6)" />
+          </TouchableOpacity>
+
         </View>
       </View>
     </View>
@@ -89,6 +94,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     borderRadius: 12,
     marginBottom: 12,
+    justifyContent: 'space-between',
+  },
+  featureLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   featureText: {
     color: '#fff',

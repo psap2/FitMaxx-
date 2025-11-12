@@ -30,6 +30,10 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
 
+  const handleBack = () => {
+    navigation.goBack();
+  };
+
   const pickImage = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     
@@ -123,6 +127,10 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
       style={styles.container}
     >
       <View style={styles.content}>
+        <TouchableOpacity style={styles.backButton} onPress={handleBack}>
+          <Ionicons name="arrow-back" size={24} color="#fff" />
+        </TouchableOpacity>
+
         <View style={styles.header}>
           <Text style={styles.logo}>FitMax</Text>
           <Text style={styles.subtitle}>AI Physique Analysis</Text>
@@ -203,6 +211,11 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 20,
     paddingTop: 60,
+  },
+  backButton: {
+    alignSelf: 'flex-start',
+    marginBottom: 12,
+    padding: 8,
   },
   header: {
     alignItems: 'center',
