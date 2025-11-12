@@ -189,10 +189,10 @@ export const ResultsScreen: React.FC<ResultsScreenProps> = ({ navigation, route 
             </Text>
           </View>
 
-          <GlassCard style={styles.summaryCard}>
+          <View style={styles.summaryCard}>
             <Text style={styles.summaryTitle}>Summary</Text>
             <Text style={styles.summaryText}>{analysis.summaryRecommendation}</Text>
-          </GlassCard>
+          </View>
 
           {premiumMetrics.length > 0 && (
             <View style={styles.premiumContainer}>
@@ -375,19 +375,20 @@ const styles = StyleSheet.create({
     marginBottom: 24,
     padding: 18,
     borderRadius: 16,
-    backgroundColor: 'rgba(255, 255, 255, 0.04)',
+    backgroundColor: 'rgba(255, 107, 53, 0.08)',
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.08)',
+    borderColor: 'rgba(255, 107, 53, 0.35)',
   },
   summaryTitle: {
     fontSize: 18,
     fontFamily: fonts.bold,
-    color: '#fff',
+    color: '#FF6B35',
     marginBottom: 10,
   },
   summaryText: {
     fontSize: 14,
-    color: 'rgba(255, 255, 255, 0.85)',
+    color: '#fff',
+    fontFamily: fonts.regular,
     lineHeight: 20,
   },
   premiumContainer: {
