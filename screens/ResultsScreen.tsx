@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo, useCallback, useState } from 'react';
 import {
   View,
   Text,
@@ -7,6 +7,8 @@ import {
   Image,
   TouchableOpacity,
   Dimensions,
+  ActivityIndicator,
+  Alert,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -15,6 +17,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { GlassCard } from '../components/GlassCard';
 import { RootStackParamList } from '../types';
 import { fonts } from '../theme/fonts';
+import { supabase } from '../utils/supabase';
+import { createPost } from '../backend/server/db/query';
 
 type ResultsScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'Results'>;
 type ResultsScreenRouteProp = RouteProp<RootStackParamList, 'Results'>;
@@ -28,35 +32,114 @@ const { width } = Dimensions.get('window');
 
 export const ResultsScreen: React.FC<ResultsScreenProps> = ({ navigation, route }) => {
   const { analysis, imageUri } = route.params;
+  const [isSaving, setIsSaving] = useState(false);
+  const uploadImage = useCallback(async (uri: string, userId: string) => {
+    const response = await fetch(uri);
+    const arrayBuffer = await response.arrayBuffer();
+    const fileExt = uri.split('.').pop() ?? 'jpg';
+    const filePath = `${userId}/${Date.now()}.${fileExt}`;
 
-  const getRatingColor = (rating: number) => {
-    if (rating >= 8) return '#FF6B35';
-    if (rating >= 6) return '#FF8C42';
-    if (rating >= 4) return '#FFA500';
+    const { error } = await supabase.storage
+      .from('images')
+      .upload(filePath, arrayBuffer, {
+        cacheControl: '3600',
+        upsert: false,
+        contentType: response.headers.get('Content-Type') ?? 'image/jpeg',
+      });
+
+    if (error) {
+      throw error;
+    }
+
+    const { data } = supabase.storage.from('images').getPublicUrl(filePath);
+    return { publicUrl: data.publicUrl, storagePath: filePath };
+  }, []);
+
+  const handleSave = useCallback(async () => {
+    if (isSaving) {
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      const { data: session } = await supabase.auth.getSession();
+      const userId = session.session?.user?.id;
+
+      if (!userId) {
+        Alert.alert('Not Signed In', 'Please sign in before saving your analysis.');
+        return;
+      }
+
+      let publicUrl = imageUri;
+      let storagePath: string | null = null;
+
+      try {
+        const uploadResult = await uploadImage(imageUri, userId);
+        publicUrl = uploadResult.publicUrl;
+        storagePath = uploadResult.storagePath;
+      } catch (uploadError) {
+        console.error('Failed to upload image:', uploadError);
+        Alert.alert('Upload Failed', 'Could not upload the image. Please try again.');
+        return;
+      }
+
+      const toStoredScore = (value: number | undefined | null) =>
+        typeof value === 'number' ? Math.round(value) : null;
+
+      await createPost({
+        user_id: userId,
+        image_url: publicUrl,
+        overall_rating: toStoredScore(analysis.overallRating * 10),
+        potential: toStoredScore(analysis.potential * 10),
+        body_fat: toStoredScore(analysis.bodyFatPercentage * 10),
+        symmetry: toStoredScore(analysis.symmetry * 10),
+        summaryrecc: analysis.summaryRecommendation,
+      });
+
+      navigation.setParams({
+        analysis,
+        imageUri: publicUrl,
+      });
+
+      Alert.alert('Saved', 'Your analysis has been saved to your progress.');
+    } catch (error) {
+      console.error('Failed to persist analysis result:', error);
+      Alert.alert('Save Failed', 'We could not save your analysis. Please try again.');
+    } finally {
+      setIsSaving(false);
+    }
+  }, [analysis, imageUri, isSaving]);
+
+  const scoreMetrics = useMemo(
+    () => [
+      { label: 'Overall Rating', value: analysis.overallRating },
+      { label: 'Potential', value: analysis.potential },
+      { label: 'Symmetry', value: analysis.symmetry },
+    ],
+    [analysis],
+  );
+
+  const premiumMetrics = useMemo(() => {
+    if (!analysis.premiumScores) {
+      return [];
+    }
+
+    return Object.entries(analysis.premiumScores)
+      .filter(([, value]) => typeof value === 'number')
+      .map(([key, value]) => ({
+        label: key.replace(/_/g, ' ').replace(/\b\w/g, (l) => l.toUpperCase()),
+        value: value as number,
+      }));
+  }, [analysis.premiumScores]);
+
+  const formatScoreValue = (value: number) => value.toFixed(1);
+
+  const progressColor = (value: number) => {
+    if (value >= 8) return '#FF6B35';
+    if (value >= 6) return '#FF8C42';
+    if (value >= 4) return '#FFA500';
     return '#ef4444';
   };
-
-  const getProgressBarColor = (rating: number) => {
-    if (rating >= 8) return '#FF6B35';
-    if (rating >= 6) return '#FF8C42';
-    if (rating >= 4) return '#FFA500';
-    return '#ef4444';
-  };
-
-  const ratings = [
-    { label: 'Overall', value: analysis.overallRating },
-    { label: 'Potential', value: Math.min(analysis.overallRating + 2, 10) },
-    { label: 'Symmetry', value: analysis.muscleScores.chest },
-    { label: 'Quality', value: analysis.muscleScores.shoulders },
-    { label: 'Definition', value: analysis.muscleScores.abs },
-    { label: 'Cleanliness', value: analysis.muscleScores.legs },
-    { label: 'Chest', value: analysis.muscleScores.chest },
-    { label: 'Shoulders', value: analysis.muscleScores.shoulders },
-    { label: 'Arms', value: analysis.muscleScores.arms },
-    { label: 'Legs', value: analysis.muscleScores.legs },
-    { label: 'Abs', value: analysis.muscleScores.abs },
-    { label: 'Body Fat', value: 10 - (analysis.bodyFatPercentage / 2) },
-  ];
 
   return (
     <LinearGradient
@@ -72,26 +155,26 @@ export const ResultsScreen: React.FC<ResultsScreenProps> = ({ navigation, route 
             <Ionicons name="arrow-back" size={24} color="#fff" />
           </TouchableOpacity>
 
-          <Text style={styles.title}>RATINGS</Text>
+          <Text style={styles.title}>Analysis Summary</Text>
 
           <GlassCard style={styles.imageCard}>
             <Image source={{ uri: imageUri }} style={styles.resultImage} />
           </GlassCard>
 
-          <View style={styles.ratingsGrid}>
-            {ratings.map((rating, index) => (
-              <View key={index} style={styles.ratingItem}>
-                <Text style={styles.ratingLabel}>{rating.label}:</Text>
-                <Text style={[styles.ratingValue, { color: getRatingColor(rating.value) }]}>
-                  {Math.round(rating.value * 10)}
+          <View style={styles.metricsGrid}>
+            {scoreMetrics.map((metric) => (
+              <View key={metric.label} style={styles.metricItem}>
+                <Text style={styles.metricLabel}>{metric.label}</Text>
+                <Text style={[styles.metricValue, { color: progressColor(metric.value) }]}>
+                  {formatScoreValue(metric.value)}
                 </Text>
                 <View style={styles.progressBarContainer}>
                   <View 
                     style={[
                       styles.progressBar, 
                       { 
-                        width: `${rating.value * 10}%`,
-                        backgroundColor: getProgressBarColor(rating.value)
+                        width: `${Math.min(metric.value / 10, 1) * 100}%`,
+                        backgroundColor: progressColor(metric.value)
                       }
                     ]} 
                   />
@@ -99,6 +182,36 @@ export const ResultsScreen: React.FC<ResultsScreenProps> = ({ navigation, route 
               </View>
             ))}
           </View>
+
+          <GlassCard style={styles.bodyFatCard}>
+            <Text style={styles.metricLabel}>Body Fat Percentage</Text>
+            <Text style={[styles.metricValue, styles.bodyFatValue]}>
+              {analysis.bodyFatPercentage.toFixed(1)}%
+            </Text>
+          </GlassCard>
+
+          <GlassCard style={styles.summaryCard}>
+            <Text style={styles.summaryTitle}>Summary</Text>
+            <Text style={styles.summaryText}>{analysis.summaryRecommendation}</Text>
+          </GlassCard>
+
+          {premiumMetrics.length > 0 && (
+            <View style={styles.premiumContainer}>
+              <Text style={styles.premiumTitle}>Premium Muscle Group Scores</Text>
+              <GlassCard>
+                <View style={styles.premiumGrid}>
+                  {premiumMetrics.map((metric) => (
+                    <View key={metric.label} style={styles.premiumItem}>
+                      <Text style={styles.metricLabel}>{metric.label}</Text>
+                      <Text style={[styles.metricValue, { color: progressColor(metric.value) }]}>
+                        {formatScoreValue(metric.value)}
+                      </Text>
+                    </View>
+                  ))}
+                </View>
+              </GlassCard>
+            </View>
+          )}
 
           <View style={styles.suggestionsContainer}>
             <Text style={styles.suggestionsTitle}>Suggestions</Text>
@@ -131,18 +244,22 @@ export const ResultsScreen: React.FC<ResultsScreenProps> = ({ navigation, route 
           </View>
 
           <View style={styles.buttonContainer}>
-            <TouchableOpacity
-              style={styles.actionButton}
-              onPress={() => navigation.navigate('Home')}
-            >
-              <LinearGradient
-                colors={['#FF6B35', '#FF8C42']}
-                style={styles.buttonGradient}
-              >
-                <Ionicons name="save" size={20} color="#fff" />
-                <Text style={styles.buttonText}>Save</Text>
-              </LinearGradient>
-            </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.actionButton}
+            onPress={handleSave}
+            disabled={isSaving}
+          >
+            <LinearGradient colors={['#FF6B35', '#FF8C42']} style={styles.buttonGradient}>
+              {isSaving ? (
+                <ActivityIndicator color="#fff" size="small" />
+              ) : (
+                <>
+                  <Ionicons name="save" size={20} color="#fff" />
+                  <Text style={styles.buttonText}>Save</Text>
+                </>
+              )}
+            </LinearGradient>
+          </TouchableOpacity>
 
             <TouchableOpacity
               style={styles.actionButton}
@@ -151,10 +268,7 @@ export const ResultsScreen: React.FC<ResultsScreenProps> = ({ navigation, route 
                 console.log('Share results');
               }}
             >
-              <LinearGradient
-                colors={['#FF6B35', '#FF8C42']}
-                style={styles.buttonGradient}
-              >
+              <LinearGradient colors={['#FF6B35', '#FF8C42']} style={styles.buttonGradient}>
                 <Ionicons name="share" size={20} color="#fff" />
                 <Text style={styles.buttonText}>Share</Text>
               </LinearGradient>
@@ -203,31 +317,38 @@ const styles = StyleSheet.create({
     height: '100%',
     resizeMode: 'cover',
   },
-  ratingsGrid: {
-    marginBottom: 30,
+  metricsGrid: {
+    marginBottom: 20,
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'space-between',
   },
-  ratingItem: {
+  metricItem: {
     width: '48%',
-    marginBottom: 20,
+    marginBottom: 16,
     backgroundColor: 'rgba(255, 255, 255, 0.05)',
     borderRadius: 12,
     padding: 15,
     borderWidth: 1,
     borderColor: 'rgba(255, 107, 53, 0.2)',
   },
-  ratingLabel: {
+  metricLabel: {
     fontSize: 16,
     color: '#fff',
     fontFamily: fonts.bold,
     marginBottom: 8,
   },
-  ratingValue: {
+  metricValue: {
     fontSize: 24,
     fontFamily: fonts.bold,
     marginBottom: 8,
+  },
+  bodyFatCard: {
+    marginBottom: 20,
+    padding: 16,
+  },
+  bodyFatValue: {
+    color: '#FF6B35',
   },
   progressBarContainer: {
     height: 8,
@@ -238,6 +359,39 @@ const styles = StyleSheet.create({
   progressBar: {
     height: '100%',
     borderRadius: 4,
+  },
+  summaryCard: {
+    marginBottom: 24,
+    padding: 18,
+  },
+  summaryTitle: {
+    fontSize: 18,
+    fontFamily: fonts.bold,
+    color: '#fff',
+    marginBottom: 10,
+  },
+  summaryText: {
+    fontSize: 14,
+    color: 'rgba(255, 255, 255, 0.85)',
+    lineHeight: 20,
+  },
+  premiumContainer: {
+    marginBottom: 30,
+  },
+  premiumTitle: {
+    fontSize: 18,
+    fontFamily: fonts.bold,
+    color: '#fff',
+    marginBottom: 12,
+  },
+  premiumGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+  },
+  premiumItem: {
+    width: '48%',
+    marginBottom: 12,
   },
   suggestionsContainer: {
     marginBottom: 30,

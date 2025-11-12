@@ -17,6 +17,7 @@ import { GlassCard } from '../components/GlassCard';
 import { analyzePhysique } from '../api';
 import { RootStackParamList } from '../types';
 import { fonts } from '../theme/fonts';
+import { supabase } from '../utils/supabase';
 
 type HomeScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'Home'>;
 
@@ -69,6 +70,28 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
     }
   };
 
+  const uploadImage = async (uri: string, userId: string) => {
+    const response = await fetch(uri);
+    const arrayBuffer = await response.arrayBuffer();
+    const fileExt = uri.split('.').pop() ?? 'jpg';
+    const filePath = `${userId}/${Date.now()}.${fileExt}`;
+
+    const { error } = await supabase.storage
+      .from('images')
+      .upload(filePath, arrayBuffer, {
+        cacheControl: '3600',
+        upsert: false,
+        contentType: response.headers.get('Content-Type') ?? 'image/jpeg',
+      });
+
+    if (error) {
+      throw error;
+    }
+
+    const { data } = supabase.storage.from('images').getPublicUrl(filePath);
+    return data.publicUrl;
+  };
+
   const analyzeImage = async () => {
     if (!selectedImage) {
       Alert.alert('No Image', 'Please select an image first.');
@@ -77,6 +100,14 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
 
     setIsAnalyzing(true);
     try {
+      const { data: session } = await supabase.auth.getSession();
+      const userId = session.session?.user?.id;
+
+      if (!userId) {
+        Alert.alert('Not Signed In', 'Please sign in before analyzing.');
+        return;
+      }
+
       const analysis = await analyzePhysique(selectedImage);
       navigation.navigate('Results', { analysis, imageUri: selectedImage });
     } catch (error) {
