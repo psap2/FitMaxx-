@@ -11,13 +11,12 @@ import {
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as ImagePicker from 'expo-image-picker';
-import { Ionicons } from '@expo/vector-icons';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { GlassCard } from '../components/GlassCard';
 import { analyzePhysique } from '../api';
 import { RootStackParamList } from '../types';
 import { fonts } from '../theme/fonts';
 import { supabase } from '../utils/supabase';
+import { Ionicons } from '@expo/vector-icons';
 
 type HomeScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'Home'>;
 
@@ -144,30 +143,26 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
             </TouchableOpacity>
           </View>
         ) : (
-          <GlassCard style={styles.mainCard}>
+          <View style={styles.placeholderCard}>
             <View style={styles.placeholderContainer}>
-              <Ionicons name="body" size={80} color="rgba(255, 255, 255, 0.5)" />
-              <Text style={styles.placeholderText}>Upload your physique photo</Text>
+              <View style={styles.placeholderIconWrapper}>
+                <Ionicons name="alert-circle" size={96} color="#FF6B35" />
+              </View>
+              <Text style={styles.placeholderText}>Add a picture to begin your scan</Text>
             </View>
-          </GlassCard>
+          </View>
         )}
 
         <View style={styles.buttonContainer}>
           <TouchableOpacity style={styles.actionButton} onPress={pickImage}>
-            <LinearGradient
-              colors={['#FF6B35', '#FF8C42']}
-              style={styles.buttonGradient}
-            >
+            <LinearGradient colors={['#FF6B35', '#FF8C42']} style={styles.buttonGradient}>
               <Ionicons name="images" size={24} color="#fff" />
               <Text style={styles.buttonText}>Choose Photo</Text>
             </LinearGradient>
           </TouchableOpacity>
 
           <TouchableOpacity style={styles.actionButton} onPress={takePhoto}>
-            <LinearGradient
-              colors={['#FF8C42', '#FFA500']}
-              style={styles.buttonGradient}
-            >
+            <LinearGradient colors={['#FF8C42', '#FFA500']} style={styles.buttonGradient}>
               <Ionicons name="camera" size={24} color="#fff" />
               <Text style={styles.buttonText}>Take Photo</Text>
             </LinearGradient>
@@ -225,10 +220,16 @@ const styles = StyleSheet.create({
     marginTop: 8,
     letterSpacing: 1,
   },
-  mainCard: {
+  placeholderCard: {
     height: height * 0.4,
     marginBottom: 30,
-    overflow: 'hidden',
+    borderRadius: 24,
+    borderWidth: 2,
+    borderColor: 'rgba(255, 107, 53, 0.35)',
+    borderStyle: 'dashed',
+    backgroundColor: 'rgba(11, 11, 15, 0.95)',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   imagePreviewCard: {
     height: height * 0.4,
@@ -258,11 +259,24 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    gap: 16,
+  },
+  placeholderIconWrapper: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    borderWidth: 2,
+    borderColor: 'rgba(255, 107, 53, 0.4)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(255, 107, 53, 0.08)',
   },
   placeholderText: {
-    color: 'rgba(255, 255, 255, 0.6)',
+    color: '#FF6B35',
     fontSize: 18,
-    marginTop: 20,
+    fontFamily: fonts.bold,
+    textAlign: 'center',
+    paddingHorizontal: 20,
   },
   buttonContainer: {
     flexDirection: 'row',

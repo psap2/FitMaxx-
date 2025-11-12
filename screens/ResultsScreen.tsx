@@ -142,10 +142,7 @@ export const ResultsScreen: React.FC<ResultsScreenProps> = ({ navigation, route 
   };
 
   return (
-    <LinearGradient
-      colors={['#000000', '#000000', '#000000']}
-      style={styles.container}
-    >
+    <LinearGradient colors={['#0B0B0F', '#0B0B0F']} style={styles.container}>
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
         <View style={styles.content}>
           <TouchableOpacity
@@ -157,9 +154,9 @@ export const ResultsScreen: React.FC<ResultsScreenProps> = ({ navigation, route 
 
           <Text style={styles.title}>Analysis Summary</Text>
 
-          <GlassCard style={styles.imageCard}>
+          <View style={styles.imageWrapper}>
             <Image source={{ uri: imageUri }} style={styles.resultImage} />
-          </GlassCard>
+          </View>
 
           <View style={styles.metricsGrid}>
             {scoreMetrics.map((metric) => (
@@ -183,12 +180,12 @@ export const ResultsScreen: React.FC<ResultsScreenProps> = ({ navigation, route 
             ))}
           </View>
 
-          <GlassCard style={styles.bodyFatCard}>
+          <View style={styles.bodyFatCard}>
             <Text style={styles.metricLabel}>Body Fat Percentage</Text>
             <Text style={[styles.metricValue, styles.bodyFatValue]}>
               {analysis.bodyFatPercentage.toFixed(1)}%
             </Text>
-          </GlassCard>
+          </View>
 
           <GlassCard style={styles.summaryCard}>
             <Text style={styles.summaryTitle}>Summary</Text>
@@ -198,18 +195,16 @@ export const ResultsScreen: React.FC<ResultsScreenProps> = ({ navigation, route 
           {premiumMetrics.length > 0 && (
             <View style={styles.premiumContainer}>
               <Text style={styles.premiumTitle}>Premium Muscle Group Scores</Text>
-              <GlassCard>
-                <View style={styles.premiumGrid}>
-                  {premiumMetrics.map((metric) => (
-                    <View key={metric.label} style={styles.premiumItem}>
-                      <Text style={styles.metricLabel}>{metric.label}</Text>
-                      <Text style={[styles.metricValue, { color: progressColor(metric.value) }]}>
-                        {formatScoreValue(metric.value)}
-                      </Text>
-                    </View>
-                  ))}
-                </View>
-              </GlassCard>
+              <View style={styles.premiumGrid}>
+                {premiumMetrics.map((metric) => (
+                  <View key={metric.label} style={styles.premiumItem}>
+                    <Text style={styles.metricLabel}>{metric.label}</Text>
+                    <Text style={[styles.metricValue, { color: progressColor(metric.value) }]}>
+                      {formatScoreValue(metric.value)}
+                    </Text>
+                  </View>
+                ))}
+              </View>
             </View>
           )}
 
@@ -307,10 +302,14 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     letterSpacing: 2,
   },
-  imageCard: {
+  imageWrapper: {
     marginBottom: 30,
-    height: 200,
+    height: 220,
+    borderRadius: 24,
     overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 107, 53, 0.3)',
+    backgroundColor: 'rgba(255, 107, 53, 0.08)',
   },
   resultImage: {
     width: '100%',
@@ -326,26 +325,32 @@ const styles = StyleSheet.create({
   metricItem: {
     width: '48%',
     marginBottom: 16,
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
-    borderRadius: 12,
-    padding: 15,
+    padding: 12,
+    borderRadius: 14,
     borderWidth: 1,
-    borderColor: 'rgba(255, 107, 53, 0.2)',
+    borderColor: 'rgba(255, 107, 53, 0.35)',
+    backgroundColor: 'rgba(255, 107, 53, 0.08)',
   },
   metricLabel: {
     fontSize: 16,
-    color: '#fff',
-    fontFamily: fonts.bold,
-    marginBottom: 8,
+    color: 'rgba(255, 255, 255, 0.75)',
+    fontFamily: fonts.regular,
+    marginBottom: 6,
+    letterSpacing: 0.3,
   },
   metricValue: {
-    fontSize: 24,
+    fontSize: 28,
     fontFamily: fonts.bold,
-    marginBottom: 8,
+    marginBottom: 6,
+    color: '#FFFFFF',
   },
   bodyFatCard: {
     marginBottom: 20,
-    padding: 16,
+    padding: 18,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 107, 53, 0.35)',
+    backgroundColor: 'rgba(255, 107, 53, 0.08)',
   },
   bodyFatValue: {
     color: '#FF6B35',
@@ -363,6 +368,10 @@ const styles = StyleSheet.create({
   summaryCard: {
     marginBottom: 24,
     padding: 18,
+    borderRadius: 16,
+    backgroundColor: 'rgba(255, 255, 255, 0.04)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.08)',
   },
   summaryTitle: {
     fontSize: 18,
@@ -388,6 +397,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'space-between',
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 107, 53, 0.25)',
+    backgroundColor: 'rgba(15, 15, 20, 0.9)',
+    padding: 16,
   },
   premiumItem: {
     width: '48%',
@@ -395,12 +409,17 @@ const styles = StyleSheet.create({
   },
   suggestionsContainer: {
     marginBottom: 30,
+    backgroundColor: 'rgba(11, 11, 15, 0.85)',
+    borderRadius: 18,
+    padding: 18,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 107, 53, 0.25)',
   },
   suggestionsTitle: {
     fontSize: 20,
     fontFamily: fonts.bold,
-    color: '#fff',
-    marginBottom: 15,
+    color: '#FF6B35',
+    marginBottom: 12,
   },
   suggestionCard: {
     marginBottom: 15,
@@ -408,12 +427,12 @@ const styles = StyleSheet.create({
   suggestionHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 15,
+    marginBottom: 12,
   },
   suggestionTitle: {
     fontSize: 18,
     fontFamily: fonts.bold,
-    color: '#fff',
+    color: '#FF6B35',
     marginLeft: 10,
   },
   suggestionItem: {
@@ -432,7 +451,7 @@ const styles = StyleSheet.create({
   suggestionText: {
     flex: 1,
     fontSize: 14,
-    color: 'rgba(255, 255, 255, 0.8)',
+    color: 'rgba(255, 255, 255, 0.85)',
     lineHeight: 20,
   },
   buttonContainer: {
