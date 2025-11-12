@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Alert, Image } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -190,11 +190,6 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ navigation, route }) => 
     }
   };
 
-  const handleAppleSignIn = () => {
-    console.log('Apple Sign In', route.params);
-    navigation.navigate('MainApp');
-  };
-
   return (
     <LinearGradient colors={['#000000', '#000000', '#000000']} style={styles.container}>
       <ProgressBar currentStep={6} totalSteps={6} />
@@ -203,6 +198,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ navigation, route }) => 
         <View style={styles.header}>
           <Text style={styles.logo}>FitMax</Text>
           <Text style={styles.tagline}>Your AI Fitness Coach</Text>
+          <Image source={require('../assets/logo.png')} style={styles.logoImage} resizeMode="contain" />
         </View>
 
         <View style={styles.authContainer}>
@@ -215,16 +211,6 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ navigation, route }) => 
               <Ionicons name="logo-google" size={24} color="#fff" />
               <Text style={styles.authButtonText}>Continue with Google</Text>
             </View>
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.authButton} onPress={handleAppleSignIn}>
-            <LinearGradient
-              colors={['#000', '#1a1a1a']}
-              style={styles.appleButton}
-            >
-              <Ionicons name="logo-apple" size={24} color="#fff" />
-              <Text style={styles.authButtonText}>Continue with Apple</Text>
-            </LinearGradient>
           </TouchableOpacity>
 
           <Text style={styles.terms}>
@@ -245,7 +231,8 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
     paddingHorizontal: 20,
-    justifyContent: 'space-around',
+    justifyContent: 'flex-start',
+    paddingTop: 72,
   },
   header: {
     alignItems: 'center',
@@ -257,13 +244,21 @@ const styles = StyleSheet.create({
     color: '#fff',
     letterSpacing: 2,
   },
+  logoImage: {
+    width: 160,
+    height: 160,
+    marginTop: 0,
+    backgroundColor: 'transparent',
+  },
   tagline: {
     fontSize: 18,
     color: 'rgba(255, 255, 255, 0.7)',
     marginTop: 8,
+    marginBottom: 24,
     letterSpacing: 1,
   },
   authContainer: {
+    marginTop: 40,
     marginBottom: 40,
   },
   title: {
@@ -271,13 +266,14 @@ const styles = StyleSheet.create({
     fontFamily: fonts.bold,
     color: '#fff',
     textAlign: 'center',
-    marginBottom: 12,
+    marginTop: 24,
+    marginBottom: 8,
   },
   subtitle: {
     fontSize: 16,
     color: 'rgba(255, 255, 255, 0.7)',
     textAlign: 'center',
-    marginBottom: 40,
+    marginBottom: 16,
   },
   authButton: {
     marginBottom: 16,
@@ -286,13 +282,6 @@ const styles = StyleSheet.create({
   },
   googleButton: {
     backgroundColor: '#FF6B35',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 18,
-    gap: 12,
-  },
-  appleButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
