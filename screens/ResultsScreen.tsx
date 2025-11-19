@@ -18,7 +18,7 @@ import { GlassCard } from '../components/GlassCard';
 import { RootStackParamList } from '../types';
 import { fonts } from '../theme/fonts';
 import { supabase } from '../utils/supabase';
-import { createPost } from '../backend/server/db/query';
+import { createPost } from '../server/lib/db/query';
 
 type ResultsScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'Results'>;
 type ResultsScreenRouteProp = RouteProp<RootStackParamList, 'Results'>;

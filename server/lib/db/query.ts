@@ -1,4 +1,4 @@
-import { supabase } from "../../../utils/supabase";
+import { supabase } from "../supabase";
 import { Post, User } from "./schema";
 
 export const getUser = async (email: string | undefined) => {
@@ -34,3 +34,4 @@ export const createPost = async (post: PostInsert) => {
     }
     return data;
 }
+

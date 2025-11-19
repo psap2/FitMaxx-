@@ -20,3 +20,4 @@ export interface Post {
   symmetry: number | null;
   summaryrecc: string | null;
 }
+
