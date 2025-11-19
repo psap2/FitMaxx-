@@ -137,7 +137,7 @@ export const MainAppScreen: React.FC<MainAppScreenProps> = ({ navigation }) => {
       <View
         style={[
           styles.headerOverlay,
-          { top: insets.top + 8, right: 20 },
+          { top: insets.top + 4, right: 20 },
         ]}
         pointerEvents="box-none"
       >
@@ -275,6 +275,8 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontFamily: fonts.bold,
     textAlign: 'center',
+    marginTop: -8,
+    marginBottom: 12,
   },
   sheetSubtitle: {
     fontSize: 14,
