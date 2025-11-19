@@ -141,7 +141,6 @@ export const MainAppScreen: React.FC<MainAppScreenProps> = ({ navigation }) => {
         ]}
         pointerEvents="box-none"
       >
-        {!!userEmail && <Text style={styles.headerEmail}>{userEmail}</Text>}
         <TouchableOpacity
           style={styles.settingsButton}
           onPress={() => setSettingsVisible(true)}
@@ -164,7 +163,6 @@ export const MainAppScreen: React.FC<MainAppScreenProps> = ({ navigation }) => {
         <View style={styles.bottomSheet}>
           <View style={styles.sheetHandle} />
           <Text style={styles.sheetTitle}>Settings</Text>
-          {!!userEmail && <Text style={styles.sheetSubtitle}>{userEmail}</Text>}
           <TouchableOpacity
             style={styles.sheetButton}
             onPress={() => {
