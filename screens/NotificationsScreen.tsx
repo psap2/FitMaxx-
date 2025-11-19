@@ -6,6 +6,7 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RouteProp } from '@react-navigation/native';
 import { ProgressBar } from '../components/ProgressBar';
 import { RootStackParamList } from '../types';
+import { fonts } from '../theme/fonts';
 
 type NotificationsScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'Notifications'>;
 type NotificationsScreenRouteProp = RouteProp<RootStackParamList, 'Notifications'>;
@@ -121,7 +122,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 32,
-    fontWeight: 'bold',
+    fontFamily: fonts.bold,
     color: '#fff',
     textAlign: 'center',
     marginBottom: 12,
@@ -162,7 +163,7 @@ const styles = StyleSheet.create({
   enableText: {
     color: '#fff',
     fontSize: 18,
-    fontWeight: '600',
+    fontFamily: fonts.bold,
   },
   skipButton: {
     padding: 12,
@@ -189,6 +190,6 @@ const styles = StyleSheet.create({
   continueText: {
     color: '#fff',
     fontSize: 18,
-    fontWeight: 'bold',
+    fontFamily: fonts.bold,
   },
 });

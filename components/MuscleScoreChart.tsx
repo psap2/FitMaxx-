@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, Dimensions } from 'react-native';
 import { BarChart } from 'react-native-chart-kit';
 import { GlassCard } from './GlassCard';
+import { fonts } from '../theme/fonts';
 
 interface MuscleScoreChartProps {
   muscleScores: {
@@ -43,7 +44,7 @@ export const MuscleScoreChart: React.FC<MuscleScoreChartProps> = ({ muscleScores
     },
     propsForLabels: {
       fontSize: 12,
-      fontWeight: 'bold',
+      fontFamily: fonts.bold,
     },
     propsForBackgroundLines: {
       strokeDasharray: '',
@@ -75,7 +76,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 20,
-    fontWeight: 'bold',
+    fontFamily: fonts.bold,
     color: '#fff',
     marginBottom: 15,
     textAlign: 'center',

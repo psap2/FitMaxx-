@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, TextInput, Keyboard, TouchableWithoutFeedback } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, TextInput, Keyboard, TouchableWithoutFeedback, Alert } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RouteProp } from '@react-navigation/native';
 import { ProgressBar } from '../components/ProgressBar';
+import { fonts } from '../theme/fonts';
 import { RootStackParamList } from '../types';
 
 type HeightScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'Height'>;
@@ -20,6 +21,24 @@ export const HeightScreen: React.FC<HeightScreenProps> = ({ navigation, route })
   const [feet, setFeet] = useState('');
   const [inches, setInches] = useState('');
   const [cm, setCm] = useState('');
+  const [hasShownInvalidInput, setHasShownInvalidInput] = useState(false);
+  const handleNumericInput = (value: string, setter: (val: string) => void) => {
+    const sanitized = value.replace(/[^0-9]/g, '');
+
+    if (value !== sanitized && !hasShownInvalidInput) {
+      Alert.alert('Numbers Only', 'Please enter numeric values for your height.');
+      setHasShownInvalidInput(true);
+    }
+
+    setter(sanitized);
+  };
+
+  const resetInvalidFlagIfNeeded = (value: string) => {
+    if (hasShownInvalidInput && value.length === 0) {
+      setHasShownInvalidInput(false);
+    }
+  };
+
 
   const isValid = unit === 'ft' ? (feet !== '' && inches !== '') : cm !== '';
 
@@ -68,8 +87,11 @@ export const HeightScreen: React.FC<HeightScreenProps> = ({ navigation, route })
                 placeholder="5"
                 placeholderTextColor="rgba(255, 255, 255, 0.3)"
                 keyboardType="number-pad"
-                value={feet}
-                onChangeText={setFeet}
+              value={feet}
+              onChangeText={(value) => {
+                resetInvalidFlagIfNeeded(value);
+                handleNumericInput(value, setFeet);
+              }}
                 maxLength={1}
                 returnKeyType="done"
                 onSubmitEditing={Keyboard.dismiss}
@@ -82,8 +104,11 @@ export const HeightScreen: React.FC<HeightScreenProps> = ({ navigation, route })
                 placeholder="10"
                 placeholderTextColor="rgba(255, 255, 255, 0.3)"
                 keyboardType="number-pad"
-                value={inches}
-                onChangeText={setInches}
+              value={inches}
+              onChangeText={(value) => {
+                resetInvalidFlagIfNeeded(value);
+                handleNumericInput(value, setInches);
+              }}
                 maxLength={2}
                 returnKeyType="done"
                 onSubmitEditing={Keyboard.dismiss}
@@ -100,7 +125,10 @@ export const HeightScreen: React.FC<HeightScreenProps> = ({ navigation, route })
               placeholderTextColor="rgba(255, 255, 255, 0.3)"
               keyboardType="number-pad"
               value={cm}
-              onChangeText={setCm}
+              onChangeText={(value) => {
+                resetInvalidFlagIfNeeded(value);
+                handleNumericInput(value, setCm);
+              }}
               maxLength={3}
               returnKeyType="done"
               onSubmitEditing={Keyboard.dismiss}
@@ -140,7 +168,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 32,
-    fontWeight: 'bold',
+    fontFamily: fonts.bold,
     color: '#fff',
     textAlign: 'center',
     marginBottom: 12,
@@ -172,7 +200,7 @@ const styles = StyleSheet.create({
   unitText: {
     fontSize: 16,
     color: 'rgba(255, 255, 255, 0.6)',
-    fontWeight: '600',
+    fontFamily: fonts.bold,
   },
   unitTextActive: {
     color: '#fff',
@@ -190,7 +218,7 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     padding: 20,
     fontSize: 48,
-    fontWeight: 'bold',
+    fontFamily: fonts.bold,
     color: '#FF6B35',
     textAlign: 'center',
     width: '100%',
@@ -222,6 +250,6 @@ const styles = StyleSheet.create({
   continueText: {
     color: '#fff',
     fontSize: 18,
-    fontWeight: 'bold',
+    fontFamily: fonts.bold,
   },
 });

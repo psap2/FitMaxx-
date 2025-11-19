@@ -5,6 +5,9 @@ import { Ionicons } from '@expo/vector-icons';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { ProgressBar } from '../components/ProgressBar';
 import { RootStackParamList } from '../types';
+import { supabase } from '../utils/supabase';
+import { useEffect } from 'react';
+import { fonts } from '../theme/fonts';
 
 type GenderScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'Gender'>;
 
@@ -13,6 +16,40 @@ interface GenderScreenProps {
 }
 
 export const GenderScreen: React.FC<GenderScreenProps> = ({ navigation }) => {
+  useEffect(() => {
+    const checkUser = async () => {
+      const { data } = await supabase.auth.getSession();
+      const sessionUser = data.session?.user;
+      if (sessionUser) {
+        const { data: userRecord, error } = await supabase
+          .from('users')
+          .select('gender,height,weight')
+          .eq('id', sessionUser.id)
+          .maybeSingle();
+
+        if (error) {
+          console.error('Error fetching user record:', error);
+          await supabase.auth.signOut();
+          return;
+        }
+
+        if (
+          userRecord &&
+          userRecord.gender &&
+          userRecord.height &&
+          userRecord.weight &&
+          userRecord.height > 0 &&
+          userRecord.weight > 0
+        ) {
+          navigation.replace('MainApp');
+        } else {
+          await supabase.auth.signOut();
+        }
+      }
+    };
+    checkUser();
+  }, []);
+  
   const [selectedGender, setSelectedGender] = useState<'male' | 'female' | null>(null);
 
   const handleContinue = () => {
@@ -88,7 +125,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 32,
-    fontWeight: 'bold',
+    fontFamily: fonts.bold,
     color: '#fff',
     textAlign: 'center',
     marginBottom: 12,
@@ -121,7 +158,7 @@ const styles = StyleSheet.create({
     fontSize: 20,
     color: 'rgba(255, 255, 255, 0.6)',
     marginTop: 16,
-    fontWeight: '600',
+    fontFamily: fonts.bold,
   },
   optionTextSelected: {
     color: '#fff',
@@ -145,6 +182,6 @@ const styles = StyleSheet.create({
   continueText: {
     color: '#fff',
     fontSize: 18,
-    fontWeight: 'bold',
+    fontFamily: fonts.bold,
   },
 });

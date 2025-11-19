@@ -6,7 +6,7 @@ export const supabase = createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
   auth: {
     storage: localStorage,
     autoRefreshToken: true,
-    persistSession: true,
+    persistSession: true,  // TODO: Change to true after testing
     detectSessionInUrl: false,
   },
 });

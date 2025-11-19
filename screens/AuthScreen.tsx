@@ -1,16 +1,20 @@
 import React, { useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Alert, Image } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RouteProp } from '@react-navigation/native';
 import { ProgressBar } from '../components/ProgressBar';
+import { fonts } from '../theme/fonts';
 import { RootStackParamList } from '../types';
 import {
   GoogleSignin,
   statusCodes,
 } from '@react-native-google-signin/google-signin';
 import { supabase } from '../utils/supabase';
+import { createUser, getUser, updateUser } from '../backend/server/db/query';
+import { User } from '../backend/server/db/schema';
+import { convertHeightToInches, convertWeightToLbs } from '../utils/conversionUtils';
 
 type AuthScreenNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
@@ -35,6 +39,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ navigation, route }) => 
 
   const handleGoogleSignIn = async () => {
     try {
+      await GoogleSignin.signOut(); // Let's have it where there is no remembering of the user's sign in (from Dan)
       await GoogleSignin.hasPlayServices();
       const response = await GoogleSignin.signIn();
 
@@ -56,6 +61,121 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ navigation, route }) => 
         Alert.alert('Sign-in failed', error.message);
       } else {
         console.log('Supabase user data:', data);
+        
+        // Extract route params for gender, height, and weight
+        const routeParams = route.params;
+        const hasOnboardingData = routeParams?.gender && routeParams?.height && routeParams?.weight;
+        
+        let isExistingUser = await getUser(data.user.email);
+        if (isExistingUser.length > 0) {
+          const existingUser = isExistingUser[0];
+          const needsOnboarding =
+            !existingUser.gender ||
+            existingUser.height === null ||
+            existingUser.height === undefined ||
+            existingUser.height === 0 ||
+            existingUser.weight === null ||
+            existingUser.weight === undefined ||
+            existingUser.weight === 0;
+
+          if (needsOnboarding) {
+            if (hasOnboardingData) {
+              try {
+                const heightInches = convertHeightToInches(routeParams.height);
+                const weightLbs = convertWeightToLbs(routeParams.weight);
+
+                if (isNaN(heightInches) || isNaN(weightLbs) || heightInches <= 0 || weightLbs <= 0) {
+                  console.error('Invalid conversion values:', { heightInches, weightLbs });
+                  throw new Error('Invalid height or weight values');
+                }
+
+                await updateUser(data.user.id, {
+                  gender: routeParams.gender,
+                  height: Math.round(heightInches),
+                  weight: Math.round(weightLbs),
+                });
+              } catch (updateError: any) {
+                console.error('Error updating existing user:', updateError);
+              }
+            } else {
+              await supabase.auth.signOut();
+              await GoogleSignin.signOut();
+              Alert.alert(
+                'Complete Your Profile',
+                'We need a few details before you can continue. Please finish the onboarding steps.'
+              );
+              navigation.reset({
+                index: 0,
+                routes: [{ name: 'Gender' }],
+              });
+              return;
+            }
+          }
+
+          navigation.navigate('MainApp');
+          return;
+        }
+        
+        // New user handling
+        if (!hasOnboardingData) {
+          await supabase.auth.signOut();
+          await GoogleSignin.signOut();
+          Alert.alert(
+            'Finish Setup',
+            'Please complete the onboarding steps before signing in.'
+          );
+          navigation.reset({
+            index: 0,
+            routes: [{ name: 'Gender' }],
+          });
+          return;
+        }
+
+        let heightInches = 0;
+        let weightLbs = 0;
+
+        try {
+          heightInches = convertHeightToInches(routeParams.height);
+          weightLbs = convertWeightToLbs(routeParams.weight);
+
+          if (isNaN(heightInches) || isNaN(weightLbs) || heightInches <= 0 || weightLbs <= 0) {
+            console.error('Invalid conversion values:', { heightInches, weightLbs });
+            throw new Error('Invalid height or weight values');
+          }
+        } catch (conversionError: any) {
+          console.error('Error converting height/weight:', conversionError);
+          await supabase.auth.signOut();
+          await GoogleSignin.signOut();
+          Alert.alert(
+            'Invalid Data',
+            'We had trouble processing your height or weight. Please try again.'
+          );
+          navigation.reset({
+            index: 0,
+            routes: [{ name: 'Gender' }],
+          });
+          return;
+        }
+
+        const user: User = {
+          id: data.user.id,
+          created_at: data.user.created_at,
+          email: data.user.email,
+          full_name: null,
+          avatar_url: null,
+          gender: routeParams.gender,
+          height: Math.round(heightInches),
+          weight: Math.round(weightLbs),
+        };
+        
+        try {
+          await createUser(user);
+        } catch (createError: any) {
+          console.error('Error creating user:', createError);
+          Alert.alert('Error', 'Failed to create account. Please try again.');
+          return;
+        }
+        
         navigation.navigate('MainApp');
       }
     } catch (error: any) {
@@ -70,11 +190,6 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ navigation, route }) => 
     }
   };
 
-  const handleAppleSignIn = () => {
-    console.log('Apple Sign In', route.params);
-    navigation.navigate('MainApp');
-  };
-
   return (
     <LinearGradient colors={['#000000', '#000000', '#000000']} style={styles.container}>
       <ProgressBar currentStep={6} totalSteps={6} />
@@ -83,6 +198,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ navigation, route }) => 
         <View style={styles.header}>
           <Text style={styles.logo}>FitMax</Text>
           <Text style={styles.tagline}>Your AI Fitness Coach</Text>
+          <Image source={require('../assets/logo.png')} style={styles.logoImage} resizeMode="contain" />
         </View>
 
         <View style={styles.authContainer}>
@@ -95,16 +211,6 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ navigation, route }) => 
               <Ionicons name="logo-google" size={24} color="#fff" />
               <Text style={styles.authButtonText}>Continue with Google</Text>
             </View>
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.authButton} onPress={handleAppleSignIn}>
-            <LinearGradient
-              colors={['#000', '#1a1a1a']}
-              style={styles.appleButton}
-            >
-              <Ionicons name="logo-apple" size={24} color="#fff" />
-              <Text style={styles.authButtonText}>Continue with Apple</Text>
-            </LinearGradient>
           </TouchableOpacity>
 
           <Text style={styles.terms}>
@@ -125,7 +231,8 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
     paddingHorizontal: 20,
-    justifyContent: 'space-around',
+    justifyContent: 'flex-start',
+    paddingTop: 72,
   },
   header: {
     alignItems: 'center',
@@ -133,31 +240,40 @@ const styles = StyleSheet.create({
   },
   logo: {
     fontSize: 56,
-    fontWeight: 'bold',
+    fontFamily: fonts.bold,
     color: '#fff',
     letterSpacing: 2,
+  },
+  logoImage: {
+    width: 160,
+    height: 160,
+    marginTop: 0,
+    backgroundColor: 'transparent',
   },
   tagline: {
     fontSize: 18,
     color: 'rgba(255, 255, 255, 0.7)',
     marginTop: 8,
+    marginBottom: 24,
     letterSpacing: 1,
   },
   authContainer: {
+    marginTop: 40,
     marginBottom: 40,
   },
   title: {
     fontSize: 28,
-    fontWeight: 'bold',
+    fontFamily: fonts.bold,
     color: '#fff',
     textAlign: 'center',
-    marginBottom: 12,
+    marginTop: 24,
+    marginBottom: 8,
   },
   subtitle: {
     fontSize: 16,
     color: 'rgba(255, 255, 255, 0.7)',
     textAlign: 'center',
-    marginBottom: 40,
+    marginBottom: 16,
   },
   authButton: {
     marginBottom: 16,
@@ -172,17 +288,10 @@ const styles = StyleSheet.create({
     paddingVertical: 18,
     gap: 12,
   },
-  appleButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 18,
-    gap: 12,
-  },
   authButtonText: {
     color: '#fff',
     fontSize: 18,
-    fontWeight: '600',
+    fontFamily: fonts.bold,
   },
   terms: {
     fontSize: 14,

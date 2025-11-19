@@ -11,11 +11,12 @@ import {
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as ImagePicker from 'expo-image-picker';
-import { Ionicons } from '@expo/vector-icons';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { GlassCard } from '../components/GlassCard';
 import { analyzePhysique } from '../api';
 import { RootStackParamList } from '../types';
+import { fonts } from '../theme/fonts';
+import { supabase } from '../utils/supabase';
+import { Ionicons } from '@expo/vector-icons';
 
 type HomeScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'Home'>;
 
@@ -28,6 +29,10 @@ const { width, height } = Dimensions.get('window');
 export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+
+  const handleBack = () => {
+    navigation.goBack();
+  };
 
   const pickImage = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -68,6 +73,28 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
     }
   };
 
+  const uploadImage = async (uri: string, userId: string) => {
+    const response = await fetch(uri);
+    const arrayBuffer = await response.arrayBuffer();
+    const fileExt = uri.split('.').pop() ?? 'jpg';
+    const filePath = `${userId}/${Date.now()}.${fileExt}`;
+
+    const { error } = await supabase.storage
+      .from('images')
+      .upload(filePath, arrayBuffer, {
+        cacheControl: '3600',
+        upsert: false,
+        contentType: response.headers.get('Content-Type') ?? 'image/jpeg',
+      });
+
+    if (error) {
+      throw error;
+    }
+
+    const { data } = supabase.storage.from('images').getPublicUrl(filePath);
+    return data.publicUrl;
+  };
+
   const analyzeImage = async () => {
     if (!selectedImage) {
       Alert.alert('No Image', 'Please select an image first.');
@@ -76,6 +103,14 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
 
     setIsAnalyzing(true);
     try {
+      const { data: session } = await supabase.auth.getSession();
+      const userId = session.session?.user?.id;
+
+      if (!userId) {
+        Alert.alert('Not Signed In', 'Please sign in before analyzing.');
+        return;
+      }
+
       const analysis = await analyzePhysique(selectedImage);
       navigation.navigate('Results', { analysis, imageUri: selectedImage });
     } catch (error) {
@@ -92,6 +127,10 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
       style={styles.container}
     >
       <View style={styles.content}>
+        <TouchableOpacity style={styles.backButton} onPress={handleBack}>
+          <Ionicons name="arrow-back" size={24} color="#fff" />
+        </TouchableOpacity>
+
         <View style={styles.header}>
           <Text style={styles.logo}>FitMax</Text>
           <Text style={styles.subtitle}>AI Physique Analysis</Text>
@@ -112,30 +151,26 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
             </TouchableOpacity>
           </View>
         ) : (
-          <GlassCard style={styles.mainCard}>
+          <View style={styles.placeholderCard}>
             <View style={styles.placeholderContainer}>
-              <Ionicons name="body" size={80} color="rgba(255, 255, 255, 0.5)" />
-              <Text style={styles.placeholderText}>Upload your physique photo</Text>
+              <View style={styles.placeholderIconWrapper}>
+                <Ionicons name="alert-circle" size={96} color="#FF6B35" />
+              </View>
+              <Text style={styles.placeholderText}>Add a picture to begin your scan</Text>
             </View>
-          </GlassCard>
+          </View>
         )}
 
         <View style={styles.buttonContainer}>
           <TouchableOpacity style={styles.actionButton} onPress={pickImage}>
-            <LinearGradient
-              colors={['#FF6B35', '#FF8C42']}
-              style={styles.buttonGradient}
-            >
+            <LinearGradient colors={['#FF6B35', '#FF8C42']} style={styles.buttonGradient}>
               <Ionicons name="images" size={24} color="#fff" />
               <Text style={styles.buttonText}>Choose Photo</Text>
             </LinearGradient>
           </TouchableOpacity>
 
           <TouchableOpacity style={styles.actionButton} onPress={takePhoto}>
-            <LinearGradient
-              colors={['#FF8C42', '#FFA500']}
-              style={styles.buttonGradient}
-            >
+            <LinearGradient colors={['#FF8C42', '#FFA500']} style={styles.buttonGradient}>
               <Ionicons name="camera" size={24} color="#fff" />
               <Text style={styles.buttonText}>Take Photo</Text>
             </LinearGradient>
@@ -177,13 +212,18 @@ const styles = StyleSheet.create({
     padding: 20,
     paddingTop: 60,
   },
+  backButton: {
+    alignSelf: 'flex-start',
+    marginBottom: 12,
+    padding: 8,
+  },
   header: {
     alignItems: 'center',
     marginBottom: 40,
   },
   logo: {
     fontSize: 48,
-    fontWeight: 'bold',
+    fontFamily: fonts.bold,
     color: '#fff',
     letterSpacing: 2,
   },
@@ -193,10 +233,16 @@ const styles = StyleSheet.create({
     marginTop: 8,
     letterSpacing: 1,
   },
-  mainCard: {
+  placeholderCard: {
     height: height * 0.4,
     marginBottom: 30,
-    overflow: 'hidden',
+    borderRadius: 24,
+    borderWidth: 2,
+    borderColor: 'rgba(255, 107, 53, 0.35)',
+    borderStyle: 'dashed',
+    backgroundColor: 'rgba(11, 11, 15, 0.95)',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   imagePreviewCard: {
     height: height * 0.4,
@@ -226,11 +272,24 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    gap: 16,
+  },
+  placeholderIconWrapper: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    borderWidth: 2,
+    borderColor: 'rgba(255, 107, 53, 0.4)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(255, 107, 53, 0.08)',
   },
   placeholderText: {
-    color: 'rgba(255, 255, 255, 0.6)',
+    color: '#FF6B35',
     fontSize: 18,
-    marginTop: 20,
+    fontFamily: fonts.bold,
+    textAlign: 'center',
+    paddingHorizontal: 20,
   },
   buttonContainer: {
     flexDirection: 'row',
@@ -253,7 +312,7 @@ const styles = StyleSheet.create({
   buttonText: {
     color: '#fff',
     fontSize: 16,
-    fontWeight: '600',
+    fontFamily: fonts.bold,
   },
   analyzeButton: {
     borderRadius: 20,
@@ -270,6 +329,6 @@ const styles = StyleSheet.create({
   analyzeText: {
     color: '#fff',
     fontSize: 20,
-    fontWeight: 'bold',
+    fontFamily: fonts.bold,
   },
 });

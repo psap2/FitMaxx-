@@ -6,6 +6,7 @@ import {
   Dimensions,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { fonts } from '../theme/fonts';
 
 const { width, height } = Dimensions.get('window');
 
@@ -19,25 +20,8 @@ export default function CoachScreen() {
         
         <Text style={styles.title}>AI Coach</Text>
         <Text style={styles.subtitle}>
-          Your personal AI fitness coach is coming soon!
+          Coming soon. Your personal AI fitness coach is almost ready!
         </Text>
-        
-        <View style={styles.featuresContainer}>
-          <View style={styles.featureItem}>
-            <Ionicons name="bulb" size={24} color="#FF6B35" />
-            <Text style={styles.featureText}>Personalized Workouts</Text>
-          </View>
-          
-          <View style={styles.featureItem}>
-            <Ionicons name="nutrition" size={24} color="#FF6B35" />
-            <Text style={styles.featureText}>Nutrition Guidance</Text>
-          </View>
-          
-          <View style={styles.featureItem}>
-            <Ionicons name="chatbubble" size={24} color="#FF6B35" />
-            <Text style={styles.featureText}>24/7 Support</Text>
-          </View>
-        </View>
       </View>
     </View>
   );
@@ -65,7 +49,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 32,
-    fontWeight: 'bold',
+    fontFamily: fonts.bold,
     color: '#fff',
     marginBottom: 16,
   },
@@ -79,20 +63,5 @@ const styles = StyleSheet.create({
   featuresContainer: {
     width: '100%',
     maxWidth: 300,
-  },
-  featureItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(255, 107, 53, 0.1)',
-    paddingVertical: 16,
-    paddingHorizontal: 20,
-    borderRadius: 12,
-    marginBottom: 12,
-  },
-  featureText: {
-    color: '#fff',
-    fontSize: 16,
-    marginLeft: 16,
-    fontWeight: '500',
   },
 });
