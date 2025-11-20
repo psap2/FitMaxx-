@@ -21,3 +21,11 @@ export interface Post {
   summaryrecc: string | null;
 }
 
+export interface Comment {
+  id: string;
+  created_at: string;
+  comment: string;
+  user: string; // user id
+  post: string; // post id
+}
+
