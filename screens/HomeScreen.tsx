@@ -112,10 +112,13 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
       }
 
       const analysis = await analyzePhysique(selectedImage);
-      navigation.navigate('Results', { analysis, imageUri: selectedImage });
-    } catch (error) {
-      Alert.alert('Analysis Failed', 'Failed to analyze the image. Please try again.');
-      console.error(error);
+      navigation.navigate('Results', { analysis, imageUri: selectedImage, allowSave: true });
+    } catch (error: any) {
+      console.error('Analysis error:', error);
+      Alert.alert(
+        'Analysis Failed', 
+        error.message || 'Failed to analyze the image. Please try again.'
+      );
     } finally {
       setIsAnalyzing(false);
     }

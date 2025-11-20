@@ -7,6 +7,7 @@ export interface User {
     gender: 'male' | 'female'; 
     height: number; // in inches
     weight: number; // in lbs
+    premium: boolean;
 }
 
 export interface Post {
@@ -27,5 +28,13 @@ export interface Comment {
   comment: string;
   user: string; // user id
   post: string; // post id
+}
+
+export interface Referral {
+  id: string;
+  created_at: string;
+  referrrer: string; // user id
+  referred: string; // user id
+  refferal_code: string;
 }
 

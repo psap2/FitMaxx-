@@ -1,104 +1,126 @@
 import { PhysiqueAnalysis } from './types';
 
-// Mock data for testing
-const mockAnalyses = [
-  {
-    overallRating: 8.6,
-    potential: 9.1,
-    bodyFatPercentage: 12.5,
-    symmetry: 8.8,
-    strengths: [
-      'Excellent shoulder development',
-      'Strong leg definition',
-      'Good overall symmetry',
-    ],
-    improvements: [
-      'Focus on core strengthening exercises',
-      'Increase protein intake for muscle recovery',
-      'Add more compound movements to your routine',
-    ],
-    summaryRecommendation:
-      'Your physique shows excellent development in the shoulders and legs. Maintain your current intensity while leaning into core work and recovery.',
-    premiumScores: {
-      chest: 8.2,
-      quads: 9.2,
-      hamstrings: 8.5,
-      calves: 7.8,
-      back: 8.9,
-      biceps: 8.0,
-      triceps: 8.3,
-      shoulders: 9.5,
-      forearms: 7.4,
-      traps: 8.7,
-    },
-  },
-  {
-    overallRating: 7.3,
-    potential: 8.0,
-    bodyFatPercentage: 15.2,
-    symmetry: 7.1,
-    strengths: [
-      'Good chest development',
-      'Solid shoulder structure',
-      'Consistent training approach',
-    ],
-    improvements: [
-      'Increase arm training frequency',
-      'Focus on progressive overload',
-      'Improve core stability',
-    ],
-    summaryRecommendation:
-      'You have a solid foundation with good chest and shoulder development. Increase arm training frequency and apply progressive overload to break plateaus.',
-    premiumScores: {
-      chest: 7.8,
-      quads: 7.4,
-      hamstrings: 7.0,
-      calves: 6.5,
-      back: 7.2,
-      biceps: 6.9,
-      triceps: 6.8,
-      shoulders: 8.1,
-      forearms: 6.4,
-      traps: 7.0,
-    },
-  },
-  {
-    overallRating: 9.1,
-    potential: 9.6,
-    bodyFatPercentage: 8.7,
-    symmetry: 9.4,
-    strengths: [
-      'Exceptional overall development',
-      'Outstanding muscle definition',
-      'Perfect symmetry and proportions',
-    ],
-    improvements: [
-      'Maintain current training intensity',
-      'Focus on recovery and nutrition',
-      'Consider advanced training techniques',
-    ],
-    summaryRecommendation:
-      'This is an exceptional physique with outstanding development across all areas. Stay consistent, prioritise recovery, and explore advanced periodisation for continued gains.',
-    premiumScores: {
-      chest: 9.2,
-      quads: 9.6,
-      hamstrings: 9.3,
-      calves: 8.9,
-      back: 9.4,
-      biceps: 8.9,
-      triceps: 9.0,
-      shoulders: 9.8,
-      forearms: 8.6,
-      traps: 9.2,
-    },
-  }
-];
+// Convert image URI to base64 using fetch (works for all URI types)
+const uriToBase64 = async (uri: string): Promise<string> => {
+  try {
+    // Use fetch to get the image, works for file://, content://, http://, etc.
+    const response = await fetch(uri);
+    
+    if (!response.ok) {
+      throw new Error(`Failed to fetch image: ${response.status}`);
+    }
 
-export const analyzePhysique = async (imageUrl: string): Promise<PhysiqueAnalysis> => {
-  // Simulate API delay
-  await new Promise(resolve => setTimeout(resolve, 2000));
-  
-  // Return random mock data
-  const randomIndex = Math.floor(Math.random() * mockAnalyses.length);
-  return mockAnalyses[randomIndex];
+    // Convert blob to base64
+    const blob = await response.blob();
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        try {
+          const base64String = reader.result as string;
+          // Remove data URL prefix if present (data:image/jpeg;base64,)
+          const base64 = base64String.includes(',') 
+            ? base64String.split(',')[1] 
+            : base64String;
+          resolve(base64);
+        } catch (error) {
+          reject(new Error('Failed to parse base64 string'));
+        }
+      };
+      reader.onerror = () => {
+        reject(new Error('Failed to read image as base64'));
+      };
+      reader.readAsDataURL(blob);
+    });
+  } catch (error: any) {
+    console.error('Error converting image to base64:', error);
+    throw new Error(`Failed to convert image to base64: ${error.message || 'Unknown error'}`);
+  }
+};
+
+export const analyzePhysique = async (imageUri: string): Promise<PhysiqueAnalysis> => {
+  try {
+    // Convert image to base64
+    console.log('Converting image to base64...');
+    const imageBase64 = await uriToBase64(imageUri);
+    console.log('Image converted, sending to API...');
+
+    // Call the OpenAI API endpoint
+    const apiUrl = __DEV__ 
+      ? 'http://10.0.2.2:3000/api/openai'
+      : process.env.EXPO_PUBLIC_API_URL || 'https://your-production-url.com/api/openai';
+
+    // Add timeout to prevent hanging
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 60000); // 60 second timeout for image analysis
+
+    const response = await fetch(apiUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        imageBase64,
+      }),
+      signal: controller.signal,
+    }).catch((fetchError: any) => {
+      clearTimeout(timeoutId);
+      if (fetchError.name === 'AbortError') {
+        throw new Error('Request timed out. The analysis is taking longer than expected.');
+      }
+      throw fetchError;
+    });
+
+    clearTimeout(timeoutId);
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.error || `API error: ${response.status}`);
+    }
+
+    const analysis: PhysiqueAnalysis = await response.json();
+    console.log('Analysis received:', JSON.stringify(analysis, null, 2));
+
+    // Validate and ensure all required fields are present (allow 0 values and null for bodyFatPercentage)
+    if (
+      typeof analysis.overallRating !== 'number' ||
+      typeof analysis.potential !== 'number' ||
+      (analysis.bodyFatPercentage !== null && typeof analysis.bodyFatPercentage !== 'number') ||
+      typeof analysis.symmetry !== 'number'
+    ) {
+      console.error('Invalid analysis structure:', {
+        overallRating: typeof analysis.overallRating,
+        potential: typeof analysis.potential,
+        bodyFatPercentage: typeof analysis.bodyFatPercentage,
+        symmetry: typeof analysis.symmetry,
+      });
+      throw new Error('Invalid analysis response: missing or invalid required fields');
+    }
+
+    // Check if analysis seems valid (not all zeros, which might indicate image wasn't recognized)
+    if (
+      analysis.overallRating === 0 &&
+      analysis.potential === 0 &&
+      analysis.symmetry === 0 &&
+      (!analysis.strengths || analysis.strengths.length === 0)
+    ) {
+      // If the summary indicates the image wasn't recognized, throw a helpful error
+      if (analysis.summaryRecommendation?.toLowerCase().includes('does not contain') ||
+          analysis.summaryRecommendation?.toLowerCase().includes('not recognizable')) {
+        throw new Error('Could not analyze the image. Please ensure the photo clearly shows your physique.');
+      }
+    }
+
+    // Ensure arrays exist even if empty
+    if (!Array.isArray(analysis.strengths)) {
+      analysis.strengths = [];
+    }
+    if (!Array.isArray(analysis.improvements)) {
+      analysis.improvements = [];
+    }
+
+    return analysis;
+  } catch (error: any) {
+    console.error('Error analyzing physique:', error);
+    throw new Error(error.message || 'Failed to analyze physique. Please try again.');
+  }
 };

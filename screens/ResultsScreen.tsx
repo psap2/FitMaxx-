@@ -1,4 +1,4 @@
-import React, { useMemo, useCallback, useState } from 'react';
+import React, { useMemo, useCallback, useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -11,6 +11,7 @@ import {
   Alert,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import { BlurView } from '@react-native-community/blur';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RouteProp } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
@@ -18,7 +19,7 @@ import { GlassCard } from '../components/GlassCard';
 import { RootStackParamList } from '../types';
 import { fonts } from '../theme/fonts';
 import { supabase } from '../utils/supabase';
-import { createPost } from '../server/lib/db/query';
+import { createPost, getUser } from '../server/lib/db/query';
 
 type ResultsScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'Results'>;
 type ResultsScreenRouteProp = RouteProp<RootStackParamList, 'Results'>;
@@ -33,6 +34,30 @@ const { width } = Dimensions.get('window');
 export const ResultsScreen: React.FC<ResultsScreenProps> = ({ navigation, route }) => {
   const { analysis, imageUri, allowSave = true } = route.params;
   const [isSaving, setIsSaving] = useState(false);
+  const [isPremiumUser, setIsPremiumUser] = useState(false);
+
+  // Check if user is premium
+  useEffect(() => {
+    const checkPremiumStatus = async () => {
+      try {
+        const { data: session } = await supabase.auth.getSession();
+        const userEmail = session.session?.user?.email;
+        
+        if (userEmail) {
+          const userData = await getUser(userEmail);
+          if (userData && userData.length > 0) {
+            setIsPremiumUser(userData[0].premium || false);
+          }
+        }
+      } catch (error) {
+        console.error('Error checking premium status:', error);
+        setIsPremiumUser(false);
+      }
+    };
+
+    checkPremiumStatus();
+  }, []);
+
   const uploadImage = useCallback(async (uri: string, userId: string) => {
     const response = await fetch(uri);
     const arrayBuffer = await response.arrayBuffer();
@@ -91,14 +116,16 @@ export const ResultsScreen: React.FC<ResultsScreenProps> = ({ navigation, route 
       }
 
       const toStoredScore = (value: number | undefined | null) =>
-        typeof value === 'number' ? Math.round(value) : null;
+        typeof value === 'number' && !isNaN(value) ? Math.round(value) : null;
 
       await createPost({
         user_id: userId,
         image_url: storagePath ?? '',
         overall_rating: toStoredScore(analysis.overallRating * 10),
         potential: toStoredScore(analysis.potential * 10),
-        body_fat: toStoredScore(analysis.bodyFatPercentage * 10),
+        body_fat: analysis.bodyFatPercentage !== null && analysis.bodyFatPercentage !== undefined
+          ? toStoredScore(analysis.bodyFatPercentage * 10)
+          : null,
         symmetry: toStoredScore(analysis.symmetry * 10),
         summaryrecc: analysis.summaryRecommendation,
       });
@@ -121,18 +148,7 @@ export const ResultsScreen: React.FC<ResultsScreenProps> = ({ navigation, route 
     [analysis],
   );
 
-  const premiumMetrics = useMemo(() => {
-    if (!analysis.premiumScores) {
-      return [];
-    }
-
-    return Object.entries(analysis.premiumScores)
-      .filter(([, value]) => typeof value === 'number')
-      .map(([key, value]) => ({
-        label: key.replace(/_/g, ' ').replace(/\b\w/g, (l) => l.toUpperCase()),
-        value: value as number,
-      }));
-  }, [analysis.premiumScores]);
+  // Remove premiumMetrics since we're showing scores directly now
 
   const formatScoreValue = (value: number) => value.toFixed(1);
 
@@ -185,7 +201,9 @@ export const ResultsScreen: React.FC<ResultsScreenProps> = ({ navigation, route 
           <View style={styles.bodyFatCard}>
             <Text style={styles.metricLabel}>Body Fat Percentage</Text>
             <Text style={[styles.metricValue, styles.bodyFatValue]}>
-              {analysis.bodyFatPercentage.toFixed(1)}%
+              {analysis.bodyFatPercentage !== null && analysis.bodyFatPercentage !== undefined
+                ? `${analysis.bodyFatPercentage.toFixed(1)}%`
+                : 'N/A'}
             </Text>
           </View>
 
@@ -194,18 +212,74 @@ export const ResultsScreen: React.FC<ResultsScreenProps> = ({ navigation, route 
             <Text style={styles.summaryText}>{analysis.summaryRecommendation}</Text>
           </View>
 
-          {premiumMetrics.length > 0 && (
+          {analysis.premiumScores && (
             <View style={styles.premiumContainer}>
               <Text style={styles.premiumTitle}>Premium Muscle Group Scores</Text>
-              <View style={styles.premiumGrid}>
-                {premiumMetrics.map((metric) => (
-                  <View key={metric.label} style={styles.premiumItem}>
-                    <Text style={styles.metricLabel}>{metric.label}</Text>
-                    <Text style={[styles.metricValue, { color: progressColor(metric.value) }]}>
-                      {formatScoreValue(metric.value)}
-                    </Text>
+              <View style={styles.premiumContentWrapper}>
+                {/* Premium scores grid with individual blur effects for non-premium users */}
+                <View style={styles.premiumGrid}>
+                  {Object.entries(analysis.premiumScores)
+                    .filter(([, value]) => typeof value === 'number')
+                    .map(([key, value]) => (
+                      <View key={key} style={styles.premiumItemWrapper}>
+                        {isPremiumUser ? (
+                          // Clear view for premium users
+                          <View style={styles.premiumItem}>
+                            <Text style={styles.metricLabel}>
+                              {key.replace(/_/g, ' ').replace(/\b\w/g, (l) => l.toUpperCase())}
+                            </Text>
+                            <Text style={[styles.metricValue, { color: progressColor(value as number) }]}>
+                              {formatScoreValue(value as number)}
+                            </Text>
+                          </View>
+                        ) : (
+                          // Blurred individual items for non-premium users
+                          <View style={styles.premiumItemBlurWrapper}>
+                            <View style={styles.premiumItem}>
+                              <Text style={styles.metricLabel}>
+                                {key.replace(/_/g, ' ').replace(/\b\w/g, (l) => l.toUpperCase())}
+                              </Text>
+                              <Text style={[styles.metricValue, { color: progressColor(value as number) }]}>
+                                {formatScoreValue(value as number)}
+                              </Text>
+                            </View>
+                            <BlurView
+                              style={styles.individualBlurOverlay}
+                              blurType="light"
+                              blurAmount={5}
+                              reducedTransparencyFallbackColor="rgba(255,255,255,0.3)"
+                            />
+                          </View>
+                        )}
+                      </View>
+                    ))}
+                </View>
+                
+                {/* Premium unlock overlay (only shown for non-premium users) */}
+                {!isPremiumUser && (
+                  <View style={styles.premiumUpgradeOverlay}>
+                    <View style={styles.premiumOverlayContent}>
+                      <View style={styles.premiumUpgradeCard}>
+                        <View style={styles.lockIconContainer}>
+                          <Ionicons name="lock-closed" size={56} color="#FF6B35" />
+                        </View>
+                        <Text style={styles.upgradeTitle}>Unlock Detailed Analysis</Text>
+                        <Text style={styles.upgradeText}>
+                          See individual muscle group scores, advanced insights, and personalized recommendations
+                        </Text>
+                        <TouchableOpacity style={styles.upgradeButton}>
+                          <LinearGradient colors={['#FF6B35', '#FF8C42']} style={styles.upgradeGradient}>
+                            <Ionicons name="star" size={20} color="#fff" style={styles.upgradeIcon} />
+                            <Text style={styles.upgradeButtonText}>Upgrade to Premium</Text>
+                          </LinearGradient>
+                        </TouchableOpacity>
+                        <Text style={styles.upgradeSubtext}>
+                          Join thousands of users getting detailed physique insights
+                        </Text>
+                      </View>
+                    </View>
                   </View>
-                ))}
+                )}
               </View>
             </View>
           )}
@@ -400,6 +474,10 @@ const styles = StyleSheet.create({
     color: '#fff',
     marginBottom: 12,
   },
+  premiumContentWrapper: {
+    position: 'relative',
+    borderRadius: 16,
+  },
   premiumGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -409,10 +487,121 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255, 107, 53, 0.25)',
     backgroundColor: 'rgba(15, 15, 20, 0.9)',
     padding: 16,
+    gap: 8,
+  },
+  premiumItemWrapper: {
+    width: '48%',
+    marginBottom: 8,
+  },
+  premiumItemBlurWrapper: {
+    position: 'relative',
+    borderRadius: 12,
+    overflow: 'hidden',
+  },
+  individualBlurOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    borderRadius: 12,
+  },
+  premiumUpgradeOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.3)',
+    borderRadius: 16,
+  },
+  premiumOverlayContent: {
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   premiumItem: {
-    width: '48%',
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    borderRadius: 12,
+    padding: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+    minHeight: 60,
+    justifyContent: 'center',
+  },
+  premiumUpgradeCard: {
+    alignItems: 'center',
+    padding: 32,
+    borderRadius: 20,
+    backgroundColor: 'rgba(11, 11, 15, 0.95)',
+    borderWidth: 2,
+    borderColor: 'rgba(255, 107, 53, 0.4)',
+    shadowColor: '#FF6B35',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.3,
+    shadowRadius: 16,
+    elevation: 8,
+    maxWidth: '90%',
+  },
+  lockIconContainer: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: 'rgba(255, 107, 53, 0.1)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 16,
+    borderWidth: 2,
+    borderColor: 'rgba(255, 107, 53, 0.3)',
+  },
+  upgradeTitle: {
+    fontSize: 24,
+    fontFamily: fonts.bold,
+    color: '#fff',
     marginBottom: 12,
+    textAlign: 'center',
+  },
+  upgradeText: {
+    fontSize: 16,
+    color: 'rgba(255, 255, 255, 0.8)',
+    textAlign: 'center',
+    marginBottom: 24,
+    lineHeight: 24,
+    paddingHorizontal: 8,
+  },
+  upgradeButton: {
+    borderRadius: 16,
+    overflow: 'hidden',
+    marginBottom: 12,
+    shadowColor: '#FF6B35',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  upgradeGradient: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 16,
+    paddingHorizontal: 32,
+    gap: 8,
+  },
+  upgradeIcon: {
+    marginRight: 4,
+  },
+  upgradeButtonText: {
+    color: '#fff',
+    fontSize: 18,
+    fontFamily: fonts.bold,
+    textAlign: 'center',
+  },
+  upgradeSubtext: {
+    fontSize: 12,
+    color: 'rgba(255, 255, 255, 0.5)',
+    textAlign: 'center',
+    fontStyle: 'italic',
   },
   suggestionsContainer: {
     marginBottom: 30,
