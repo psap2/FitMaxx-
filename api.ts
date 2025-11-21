@@ -66,7 +66,7 @@ export const analyzePhysique = async (imageUri: string): Promise<PhysiqueAnalysi
 
     // Add timeout to prevent hanging
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 60000); // 60 second timeout for image analysis
+    const timeoutId = setTimeout(() => controller.abort(), 12000000); // 60 second timeout for image analysis
 
     const response = await fetch(apiUrl, {
       method: 'POST',

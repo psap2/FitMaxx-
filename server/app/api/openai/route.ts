@@ -1,6 +1,9 @@
 import { AzureOpenAI } from "openai";
 import { NextRequest, NextResponse } from "next/server";
 
+// Increase timeout for long-running OpenAI Vision API calls
+export const maxDuration = 120; // 2 minutes
+
 export const openai = new AzureOpenAI({
   baseURL: "https://azureaiapi.cloud.unc.edu/openai",
   apiKey: process.env.OPENAI_API_KEY!,
@@ -38,6 +41,7 @@ Be professional, constructive, and encouraging. Focus on fitness and physique de
 
 export async function POST(request: NextRequest) {
   try {
+    console.log('🔄 OpenAI API endpoint called - starting analysis...');
     const body = await request.json();
     const { imageBase64, imageUrl } = body;
 
@@ -63,6 +67,9 @@ export async function POST(request: NextRequest) {
           },
         };
 
+    console.log('🤖 Sending request to OpenAI Vision API...');
+    const startTime = Date.now();
+    
     const response = await openai.chat.completions.create({
       model: "gpt-4o-mini",
       messages: [
@@ -84,6 +91,9 @@ export async function POST(request: NextRequest) {
       response_format: { type: "json_object" },
       max_tokens: 2000,
     });
+    
+    const duration = Date.now() - startTime;
+    console.log(`✅ OpenAI API responded in ${duration}ms`);
 
     const content = response.choices[0]?.message?.content;
     if (!content) {
@@ -105,11 +115,25 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    console.log('🎯 Analysis completed successfully, returning results');
     return NextResponse.json(analysis);
   } catch (error: any) {
-    console.error("OpenAI API error:", error);
+    console.error("❌ OpenAI API error:", error);
+    
+    // Provide specific error messages for common issues
+    let errorMessage = "Failed to analyze image";
+    if (error.message?.includes('timeout')) {
+      errorMessage = "OpenAI API request timed out. Please try again.";
+    } else if (error.message?.includes('rate limit')) {
+      errorMessage = "OpenAI API rate limit exceeded. Please wait a moment and try again.";
+    } else if (error.message?.includes('insufficient_quota')) {
+      errorMessage = "OpenAI API quota exceeded. Please contact support.";
+    } else if (error.message) {
+      errorMessage = error.message;
+    }
+    
     return NextResponse.json(
-      { error: error.message || "Failed to analyze image" },
+      { error: errorMessage },
       { status: 500 }
     );
   }
