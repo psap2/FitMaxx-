@@ -16,26 +16,40 @@ IMPORTANT PRIVACY NOTICE: This image is private and confidential. It is uploaded
 
 Your task is to analyze the physique image and provide a comprehensive fitness assessment. Return your analysis as a JSON object with the following structure:
 {
-  "overallRating": <number 0-10>,
-  "potential": <number 0-10>,
-  "bodyFatPercentage": <number>,
-  "symmetry": <number 0-10>,
+  "overallRating": <number 0-100>,
+  "potential": <number 0-100>,
+  "bodyFatPercentage": <number or null if not determinable> (make sure to try to determine the body fat percentage, but if you cannot, set it to null. If a person is shirtless, you should be able to determine the body fat percentage.),
+  "symmetry": <number 0-100>,
   "strengths": [<array of 3-5 strings describing strengths>],
   "improvements": [<array of 3-5 strings describing areas to improve>],
   "summaryRecommendation": <string with overall assessment and recommendations>,
   "premiumScores": {
-    "chest": <number 0-10>,
-    "quads": <number 0-10>,
-    "hamstrings": <number 0-10>,
-    "calves": <number 0-10>,
-    "back": <number 0-10>,
-    "biceps": <number 0-10>,
-    "triceps": <number 0-10>,
-    "shoulders": <number 0-10>,
-    "forearms": <number 0-10>,
-    "traps": <number 0-10>
+    "chest": <number 0-100 or null if not visible>,
+    "quads": <number 0-100 or null if not visible>,
+    "hamstrings": <number 0-100 or null if not visible>,
+    "calves": <number 0-100 or null if not visible>,
+    "back": <number 0-100 or null if not visible>,
+    "biceps": <number 0-100 or null if not visible>,
+    "triceps": <number 0-100 or null if not visible>,
+    "shoulders": <number 0-100 or null if not visible>,
+    "forearms": <number 0-100 or null if not visible>,
+    "traps": <number 0-100 or null if not visible>
   }
 }
+
+CRITICAL RATING RULES:
+- ONLY rate muscle groups that are CLEARLY VISIBLE and well-lit in the image
+- Set muscle group scores to null if:
+  - The muscle group is not visible (e.g., back muscles in a front-facing photo)
+  - The area is obscured by clothing, shadows, or poor lighting
+  - The angle doesn't allow proper assessment of that muscle group
+  - You cannot confidently evaluate the development of that specific muscle
+- For example:
+  - Front pose: Rate chest, shoulders, biceps, forearms, quads (if visible), but set back, hamstrings, calves to null if not clearly visible
+  - Back pose: Rate back, traps, triceps, hamstrings (if visible), but set chest, biceps to null
+  - Side pose: Rate shoulders, chest profile, but many others may be null depending on visibility
+- Be conservative - if you're unsure about a muscle group's development due to angle/lighting/clothing, set it to null
+- Only provide ratings for muscle groups you can assess with confidence
 
 Be professional, constructive, and encouraging. Focus on fitness and physique development.`;
 

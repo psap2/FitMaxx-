@@ -16,6 +16,7 @@
     "@react-native-community/blur": "^4.4.1",
     "@react-native-community/datetimepicker": "^8.5.0",
     "@react-native-google-signin/google-signin": "^16.0.0",
+    "@react-native-masked-view/masked-view": "^0.3.2",
     "@react-navigation/native": "^6.1.9",
     "@react-navigation/native-stack": "^6.9.17",
     "@supabase/supabase-js": "^2.80.0",

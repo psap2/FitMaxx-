@@ -1,14 +1,14 @@
 export interface PremiumMuscleScores {
-  chest?: number;
-  quads?: number;
-  hamstrings?: number;
-  calves?: number;
-  back?: number;
-  biceps?: number;
-  triceps?: number;
-  shoulders?: number;
-  forearms?: number;
-  traps?: number;
+  chest?: number | null;
+  quads?: number | null;
+  hamstrings?: number | null;
+  calves?: number | null;
+  back?: number | null;
+  biceps?: number | null;
+  triceps?: number | null;
+  shoulders?: number | null;
+  forearms?: number | null;
+  traps?: number | null;
 }
 
 export interface PhysiqueAnalysis {

@@ -133,6 +133,19 @@ export const analyzePhysique = async (imageUri: string): Promise<PhysiqueAnalysi
       analysis.improvements = [];
     }
 
+    // Validate premium scores if present - each should be number or null
+    if (analysis.premiumScores) {
+      const premiumScoreKeys = ['chest', 'quads', 'hamstrings', 'calves', 'back', 'biceps', 'triceps', 'shoulders', 'forearms', 'traps'];
+      for (const key of premiumScoreKeys) {
+        const value = analysis.premiumScores[key as keyof typeof analysis.premiumScores];
+        if (value !== null && value !== undefined && typeof value !== 'number') {
+          console.error(`Invalid premium score for ${key}:`, typeof value, value);
+          // Set invalid values to null
+          analysis.premiumScores[key as keyof typeof analysis.premiumScores] = null;
+        }
+      }
+    }
+
     return analysis;
   } catch (error: any) {
     console.error('Error analyzing physique:', error);

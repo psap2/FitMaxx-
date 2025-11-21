@@ -1,4 +1,4 @@
-import React, { useMemo, useCallback, useState, useEffect } from 'react';
+import React, { useMemo, useCallback, useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -9,9 +9,11 @@ import {
   Dimensions,
   ActivityIndicator,
   Alert,
+  Animated,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from '@react-native-community/blur';
+import MaskedView from '@react-native-masked-view/masked-view';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RouteProp } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
@@ -36,6 +38,9 @@ export const ResultsScreen: React.FC<ResultsScreenProps> = ({ navigation, route 
   const [isSaving, setIsSaving] = useState(false);
   const [isPremiumUser, setIsPremiumUser] = useState(false);
   const [isCreatingReferral, setIsCreatingReferral] = useState(false);
+  
+  // Animation values for shiny effect
+  const shineAnimation = useRef(new Animated.Value(0)).current;
 
   // Check if user is premium
   useEffect(() => {
@@ -58,6 +63,28 @@ export const ResultsScreen: React.FC<ResultsScreenProps> = ({ navigation, route 
 
     checkPremiumStatus();
   }, []);
+
+  // Start shine animation for high scores
+  useEffect(() => {
+    const startShineAnimation = () => {
+      Animated.loop(
+        Animated.sequence([
+          Animated.timing(shineAnimation, {
+            toValue: 1,
+            duration: 2000,
+            useNativeDriver: false,
+          }),
+          Animated.timing(shineAnimation, {
+            toValue: 0,
+            duration: 2000,
+            useNativeDriver: false,
+          }),
+        ]),
+      ).start();
+    };
+
+    startShineAnimation();
+  }, [shineAnimation]);
 
   const uploadImage = useCallback(async (uri: string, userId: string) => {
     const response = await fetch(uri);
@@ -197,13 +224,76 @@ export const ResultsScreen: React.FC<ResultsScreenProps> = ({ navigation, route 
 
   // Remove premiumMetrics since we're showing scores directly now
 
-  const formatScoreValue = (value: number) => value.toFixed(1);
+  const formatScoreValue = (value: number) => Math.round(value).toString();
 
   const progressColor = (value: number) => {
-    if (value >= 8) return '#FF6B35';
-    if (value >= 6) return '#FF8C42';
-    if (value >= 4) return '#FFA500';
-    return '#ef4444';
+    // Yellow to red gradient where higher scores are redder
+    // Scores are 0-100, so normalize to 0-1 range
+    const normalizedValue = Math.min(Math.max(value / 100, 0), 1);
+    
+    if (normalizedValue >= 0.8) return '#DC2626'; // Deep red for highest scores (80-100)
+    if (normalizedValue >= 0.6) return '#EF4444'; // Red (60-79)
+    if (normalizedValue >= 0.4) return '#F97316'; // Orange-red (40-59)
+    if (normalizedValue >= 0.2) return '#F59E0B'; // Orange (20-39)
+    return '#EAB308'; // Yellow for lowest scores (0-19)
+  };
+
+  // Component for shiny text effect on high scores
+  const ShinyScoreText: React.FC<{ value: number; style?: any }> = ({ value, style }) => {
+    const baseColor = progressColor(value);
+    
+    if (value < 70) {
+      // Regular text for scores below 70
+      return (
+        <Text style={[style, { color: baseColor }]}>
+          {formatScoreValue(value)}
+        </Text>
+      );
+    }
+
+    // Shiny effect for scores 70 and above - using MaskedView to clip shine to text
+    const shinePosition = shineAnimation.interpolate({
+      inputRange: [0, 1],
+      outputRange: ['-100%', '200%'],
+    });
+
+    return (
+      <MaskedView
+        style={{ flexDirection: 'row' }}
+        maskElement={
+          <Text style={[style, { color: 'black', backgroundColor: 'transparent' }]}>
+            {formatScoreValue(value)}
+          </Text>
+        }
+      >
+        {/* Base colored text */}
+        <Text style={[style, { color: baseColor }]}>
+          {formatScoreValue(value)}
+        </Text>
+        
+        {/* Animated shine overlay - only visible through the text mask */}
+        <Animated.View
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: shinePosition,
+            width: '100%',
+            height: '100%',
+          }}
+        >
+          <LinearGradient
+            colors={['transparent', 'rgba(255,255,255,0.9)', 'transparent']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+            style={{
+              width: '50%',
+              height: '100%',
+              transform: [{ skewX: '-20deg' }],
+            }}
+          />
+        </Animated.View>
+      </MaskedView>
+    );
   };
 
   return (
@@ -227,15 +317,16 @@ export const ResultsScreen: React.FC<ResultsScreenProps> = ({ navigation, route 
             {scoreMetrics.map((metric) => (
               <View key={metric.label} style={styles.metricItem}>
                 <Text style={styles.metricLabel}>{metric.label}</Text>
-                <Text style={[styles.metricValue, { color: progressColor(metric.value) }]}>
-                  {formatScoreValue(metric.value)}
-                </Text>
+                <ShinyScoreText 
+                  value={metric.value} 
+                  style={styles.metricValue}
+                />
                 <View style={styles.progressBarContainer}>
                   <View 
                     style={[
                       styles.progressBar, 
                       { 
-                        width: `${Math.min(metric.value / 10, 1) * 100}%`,
+                        width: `${Math.min(metric.value / 100, 1) * 100}%`,
                         backgroundColor: progressColor(metric.value)
                       }
                     ]} 
@@ -275,9 +366,10 @@ export const ResultsScreen: React.FC<ResultsScreenProps> = ({ navigation, route 
                             <Text style={styles.metricLabel}>
                               {key.replace(/_/g, ' ').replace(/\b\w/g, (l) => l.toUpperCase())}
                             </Text>
-                            <Text style={[styles.metricValue, { color: progressColor(value as number) }]}>
-                              {formatScoreValue(value as number)}
-                            </Text>
+                            <ShinyScoreText 
+                              value={value as number} 
+                              style={styles.metricValue}
+                            />
                           </View>
                         ) : (
                           // Blurred individual items for non-premium users
@@ -286,9 +378,10 @@ export const ResultsScreen: React.FC<ResultsScreenProps> = ({ navigation, route 
                               <Text style={styles.metricLabel}>
                                 {key.replace(/_/g, ' ').replace(/\b\w/g, (l) => l.toUpperCase())}
                               </Text>
-                              <Text style={[styles.metricValue, { color: progressColor(value as number) }]}>
-                                {formatScoreValue(value as number)}
-                              </Text>
+                              <ShinyScoreText 
+                                value={value as number} 
+                                style={styles.metricValue}
+                              />
                             </View>
                             <BlurView
                               style={styles.individualBlurOverlay}
