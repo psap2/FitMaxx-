@@ -145,7 +145,7 @@ export const CommentsScreen: React.FC<CommentsScreenProps> = ({ navigation, rout
           <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
             <Ionicons name="arrow-back" size={24} color="#fff" />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Comments</Text>
+          <Text style={styles.headerTitle}>Personal Notes</Text>
         </View>
 
         <ScrollView
@@ -201,7 +201,7 @@ export const CommentsScreen: React.FC<CommentsScreenProps> = ({ navigation, rout
             {submitting ? (
               <ActivityIndicator size="small" color="#fff" />
             ) : (
-              <Ionicons name="send" size={20} color="#fff" />
+              <Ionicons name="add-circle" size={20} color="#fff" />
             )}
           </TouchableOpacity>
         </View>

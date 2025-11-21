@@ -20,6 +20,17 @@ export interface Post {
   body_fat: number | null;
   symmetry: number | null;
   summaryrecc: string | null;
+  // Premium scores (stored as integer scores 0-100)
+  chest?: number | null;
+  quads?: number | null;
+  hamstrings?: number | null;
+  calves?: number | null;
+  back?: number | null;
+  biceps?: number | null;
+  triceps?: number | null;
+  shoulders?: number | null;
+  forearms?: number | null;
+  traps?: number | null;
 }
 
 export interface Comment {
@@ -33,8 +44,10 @@ export interface Comment {
 export interface Referral {
   id: string;
   created_at: string;
-  referrrer: string; // user id
-  referred: string; // user id
-  refferal_code: string;
+  referrer: string; // user id who created the referral
+  referred: string | null; // user id who used the referral (null until used)
+  referral_code: string; // unique referral code
 }
+
+export type ReferralInsert = Omit<Referral, 'id' | 'created_at'>;
 

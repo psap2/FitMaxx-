@@ -15,6 +15,7 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { supabase } from '../utils/supabase';
 import { RootStackParamList } from '../types';
 import { fonts } from '../theme/fonts';
+import { getUser } from '../server/lib/db/query';
 
 type GalleryNavigationProp = NativeStackNavigationProp<RootStackParamList, 'Gallery'>;
 
@@ -27,12 +28,24 @@ interface PostPreview {
   body_fat: number | null;
   symmetry: number | null;
   summaryrecc: string | null;
+  // Premium scores
+  chest?: number | null;
+  quads?: number | null;
+  hamstrings?: number | null;
+  calves?: number | null;
+  back?: number | null;
+  biceps?: number | null;
+  triceps?: number | null;
+  shoulders?: number | null;
+  forearms?: number | null;
+  traps?: number | null;
 }
 
 const GalleryScreen: React.FC = () => {
   const navigation = useNavigation<GalleryNavigationProp>();
   const [posts, setPosts] = useState<PostPreview[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isPremiumUser, setIsPremiumUser] = useState(false);
 
   const fetchPosts = useCallback(async () => {
     setLoading(true);
@@ -45,9 +58,18 @@ const GalleryScreen: React.FC = () => {
         return;
       }
 
+      // Check if user is premium
+      const userEmail = session.session?.user?.email;
+      if (userEmail) {
+        const userData = await getUser(userEmail);
+        if (userData && userData.length > 0) {
+          setIsPremiumUser(userData[0].premium || false);
+        }
+      }
+
       const { data, error } = await supabase
         .from('posts')
-        .select('id, image_url, created_at, overall_rating, potential, body_fat, symmetry, summaryrecc')
+        .select('id, image_url, created_at, overall_rating, potential, body_fat, symmetry, summaryrecc, chest, quads, hamstrings, calves, back, biceps, triceps, shoulders, forearms, traps')
         .eq('user_id', userId)
         .order('created_at', { ascending: false });
 
@@ -99,9 +121,28 @@ const GalleryScreen: React.FC = () => {
       style={styles.card}
       onPress={() => {
         const toScore = (value: number | null) => (typeof value === 'number' ? value / 10 : 0);
+        // Build premium scores object if user is premium and scores exist
+        const premiumScores = isPremiumUser && (
+          item.chest || item.quads || item.hamstrings || item.calves || 
+          item.back || item.biceps || item.triceps || item.shoulders || 
+          item.forearms || item.traps
+        ) ? {
+          chest: item.chest ? toScore(item.chest) : undefined,
+          quads: item.quads ? toScore(item.quads) : undefined,
+          hamstrings: item.hamstrings ? toScore(item.hamstrings) : undefined,
+          calves: item.calves ? toScore(item.calves) : undefined,
+          back: item.back ? toScore(item.back) : undefined,
+          biceps: item.biceps ? toScore(item.biceps) : undefined,
+          triceps: item.triceps ? toScore(item.triceps) : undefined,
+          shoulders: item.shoulders ? toScore(item.shoulders) : undefined,
+          forearms: item.forearms ? toScore(item.forearms) : undefined,
+          traps: item.traps ? toScore(item.traps) : undefined,
+        } : undefined;
+
         navigation.navigate('Results', {
           allowSave: false,
           imageUri: item.image_url,
+          postId: item.id,
           analysis: {
             overallRating: toScore(item.overall_rating),
             potential: toScore(item.potential),
@@ -110,6 +151,7 @@ const GalleryScreen: React.FC = () => {
             summaryRecommendation: item.summaryrecc ?? 'No summary available.',
             strengths: [],
             improvements: [],
+            premiumScores,
           },
         });
       }}
@@ -130,6 +172,18 @@ const GalleryScreen: React.FC = () => {
           {item.overall_rating ? (item.overall_rating / 10).toFixed(1) : '--'}
         </Text>
       </View>
+      
+      {/* Premium indicator for premium users with premium scores */}
+      {isPremiumUser && (
+        item.chest || item.quads || item.hamstrings || item.calves || 
+        item.back || item.biceps || item.triceps || item.shoulders || 
+        item.forearms || item.traps
+      ) && (
+        <View style={styles.premiumBadge}>
+          <Ionicons name="star" size={12} color="#FFD700" />
+          <Text style={styles.premiumBadgeText}>Premium</Text>
+        </View>
+      )}
     </TouchableOpacity>
   );
 
@@ -143,11 +197,16 @@ const GalleryScreen: React.FC = () => {
 
   if (posts.length === 0) {
     return (
-      <View style={styles.emptyContainer}>
-        <Text style={styles.emptyTitle}>No progress yet</Text>
-        <Text style={styles.emptySubtitle}>
-          Upload your first scan to start tracking your transformation.
-        </Text>
+      <View style={styles.container}>
+        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+          <Ionicons name="arrow-back" size={24} color="#fff" />
+        </TouchableOpacity>
+        <View style={styles.emptyContainer}>
+          <Text style={styles.emptyTitle}>No progress yet</Text>
+          <Text style={styles.emptySubtitle}>
+            Upload your first scan to start tracking your transformation.
+          </Text>
+        </View>
       </View>
     );
   }
@@ -261,6 +320,24 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontFamily: fonts.bold,
     fontSize: 14,
+  },
+  premiumBadge: {
+    position: 'absolute',
+    top: 10,
+    left: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    paddingHorizontal: 6,
+    paddingVertical: 3,
+    borderRadius: 12,
+    zIndex: 2,
+  },
+  premiumBadgeText: {
+    color: '#FFD700',
+    fontFamily: fonts.bold,
+    fontSize: 10,
+    marginLeft: 2,
   },
   fallbackText: {
     fontSize: 12,

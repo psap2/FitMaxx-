@@ -53,7 +53,8 @@ export type RootStackParamList = {
   Extras: undefined;
   Coach: undefined;
   Home: undefined;
-  Results: { analysis: PhysiqueAnalysis; imageUri: string; allowSave?: boolean };
+  Results: { analysis: PhysiqueAnalysis; imageUri: string; allowSave?: boolean; postId?: string };
   Gallery: undefined;
   EditProfile: undefined;
+  Comments: { postId: string };
 };

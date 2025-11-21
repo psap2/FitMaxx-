@@ -19,7 +19,7 @@ import { GlassCard } from '../components/GlassCard';
 import { RootStackParamList } from '../types';
 import { fonts } from '../theme/fonts';
 import { supabase } from '../utils/supabase';
-import { createPost, getUser } from '../server/lib/db/query';
+import { createPost, getUser, createReferral } from '../server/lib/db/query';
 
 type ResultsScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'Results'>;
 type ResultsScreenRouteProp = RouteProp<RootStackParamList, 'Results'>;
@@ -32,9 +32,10 @@ interface ResultsScreenProps {
 const { width } = Dimensions.get('window');
 
 export const ResultsScreen: React.FC<ResultsScreenProps> = ({ navigation, route }) => {
-  const { analysis, imageUri, allowSave = true } = route.params;
+  const { analysis, imageUri, allowSave = true, postId } = route.params;
   const [isSaving, setIsSaving] = useState(false);
   const [isPremiumUser, setIsPremiumUser] = useState(false);
+  const [isCreatingReferral, setIsCreatingReferral] = useState(false);
 
   // Check if user is premium
   useEffect(() => {
@@ -128,6 +129,17 @@ export const ResultsScreen: React.FC<ResultsScreenProps> = ({ navigation, route 
           : null,
         symmetry: toStoredScore(analysis.symmetry * 10),
         summaryrecc: analysis.summaryRecommendation,
+        // Save premium scores if they exist
+        chest: analysis.premiumScores?.chest ? toStoredScore(analysis.premiumScores.chest * 10) : null,
+        quads: analysis.premiumScores?.quads ? toStoredScore(analysis.premiumScores.quads * 10) : null,
+        hamstrings: analysis.premiumScores?.hamstrings ? toStoredScore(analysis.premiumScores.hamstrings * 10) : null,
+        calves: analysis.premiumScores?.calves ? toStoredScore(analysis.premiumScores.calves * 10) : null,
+        back: analysis.premiumScores?.back ? toStoredScore(analysis.premiumScores.back * 10) : null,
+        biceps: analysis.premiumScores?.biceps ? toStoredScore(analysis.premiumScores.biceps * 10) : null,
+        triceps: analysis.premiumScores?.triceps ? toStoredScore(analysis.premiumScores.triceps * 10) : null,
+        shoulders: analysis.premiumScores?.shoulders ? toStoredScore(analysis.premiumScores.shoulders * 10) : null,
+        forearms: analysis.premiumScores?.forearms ? toStoredScore(analysis.premiumScores.forearms * 10) : null,
+        traps: analysis.premiumScores?.traps ? toStoredScore(analysis.premiumScores.traps * 10) : null,
       });
 
       Alert.alert('Saved', 'Your analysis has been saved to your progress.');
@@ -138,6 +150,41 @@ export const ResultsScreen: React.FC<ResultsScreenProps> = ({ navigation, route 
       setIsSaving(false);
     }
   }, [analysis, imageUri, isSaving]);
+
+  const handleUpgradePress = async () => {
+    setIsCreatingReferral(true);
+    try {
+      const { data: session } = await supabase.auth.getSession();
+      const userId = session.session?.user?.id;
+
+      if (!userId) {
+        Alert.alert('Error', 'You must be signed in to create a referral.');
+        return;
+      }
+
+      const referral = await createReferral(userId, supabase);
+      
+      Alert.alert(
+        'Get Premium Free!',
+        `Share your referral code with a friend to unlock Premium:\n\n${referral.referral_code}\n\nWhen they sign up and use your code, you'll both get Premium access!`,
+        [
+          {
+            text: 'Copy Code',
+            onPress: () => {
+              // You might want to add clipboard functionality here
+              console.log('Referral code:', referral.referral_code);
+            }
+          },
+          { text: 'OK' }
+        ]
+      );
+    } catch (error: any) {
+      console.error('Error creating referral:', error);
+      Alert.alert('Error', 'Failed to create referral code. Please try again.');
+    } finally {
+      setIsCreatingReferral(false);
+    }
+  };
 
   const scoreMetrics = useMemo(
     () => [
@@ -267,10 +314,20 @@ export const ResultsScreen: React.FC<ResultsScreenProps> = ({ navigation, route 
                         <Text style={styles.upgradeText}>
                           See individual muscle group scores, advanced insights, and personalized recommendations
                         </Text>
-                        <TouchableOpacity style={styles.upgradeButton}>
+                        <TouchableOpacity 
+                          style={styles.upgradeButton}
+                          onPress={handleUpgradePress}
+                          disabled={isCreatingReferral}
+                        >
                           <LinearGradient colors={['#FF6B35', '#FF8C42']} style={styles.upgradeGradient}>
-                            <Ionicons name="star" size={20} color="#fff" style={styles.upgradeIcon} />
-                            <Text style={styles.upgradeButtonText}>Upgrade to Premium</Text>
+                            {isCreatingReferral ? (
+                              <ActivityIndicator size="small" color="#fff" />
+                            ) : (
+                              <>
+                                <Ionicons name="star" size={20} color="#fff" style={styles.upgradeIcon} />
+                                <Text style={styles.upgradeButtonText}>Get Premium</Text>
+                              </>
+                            )}
                           </LinearGradient>
                         </TouchableOpacity>
                         <Text style={styles.upgradeSubtext}>
@@ -332,6 +389,18 @@ export const ResultsScreen: React.FC<ResultsScreenProps> = ({ navigation, route 
                       <Text style={styles.buttonText}>Save</Text>
                     </>
                   )}
+                </LinearGradient>
+              </TouchableOpacity>
+            )}
+
+            {!allowSave && postId && (
+              <TouchableOpacity
+                style={styles.actionButton}
+                onPress={() => navigation.navigate('Comments', { postId })}
+              >
+                <LinearGradient colors={['#E63222', '#FF6A2F']} style={styles.buttonGradient}>
+                  <Ionicons name="chatbubble" size={20} color="#fff" />
+                  <Text style={styles.buttonText}>Notes</Text>
                 </LinearGradient>
               </TouchableOpacity>
             )}

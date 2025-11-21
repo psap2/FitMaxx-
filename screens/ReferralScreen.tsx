@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, TextInput } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, TextInput, Alert, ActivityIndicator } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -7,6 +7,8 @@ import { RouteProp } from '@react-navigation/native';
 import { ProgressBar } from '../components/ProgressBar';
 import { RootStackParamList } from '../types';
 import { fonts } from '../theme/fonts';
+import { validateReferralCode } from '../server/lib/db/query';
+import { supabase } from '../utils/supabase';
 
 type ReferralScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'Referral'>;
 type ReferralScreenRouteProp = RouteProp<RootStackParamList, 'Referral'>;
@@ -18,12 +20,75 @@ interface ReferralScreenProps {
 
 export const ReferralScreen: React.FC<ReferralScreenProps> = ({ navigation, route }) => {
   const [referralCode, setReferralCode] = useState('');
+  const [isProcessing, setIsProcessing] = useState(false);
 
-  const handleContinue = () => {
-    navigation.navigate('Notifications', { 
-      ...route.params,
-      referralCode: referralCode || undefined
-    });
+  const handleContinue = async () => {
+    if (referralCode.trim()) {
+      setIsProcessing(true);
+      try {
+        // Validate referral code without requiring sign-in
+        const validation = await validateReferralCode(referralCode.trim().toUpperCase(), supabase);
+        
+        if (validation.valid) {
+          Alert.alert(
+            'Valid Code!',
+            'Great! Your referral code is valid. Complete your signup to activate premium benefits for both you and your referrer.',
+            [
+              {
+                text: 'Continue',
+                onPress: () => navigation.navigate('Notifications', { 
+                  ...route.params,
+                  referralCode: referralCode.trim().toUpperCase()
+                })
+              }
+            ]
+          );
+        } else {
+          Alert.alert(
+            'Invalid Code',
+            validation.message || 'The referral code is invalid or has already been used.',
+            [
+              {
+                text: 'Try Again',
+                onPress: () => setReferralCode('')
+              },
+              {
+                text: 'Skip',
+                onPress: () => navigation.navigate('Notifications', { 
+                  ...route.params,
+                  referralCode: undefined
+                })
+              }
+            ]
+          );
+        }
+      } catch (error: any) {
+        console.error('Error validating referral code:', error);
+        Alert.alert(
+          'Error',
+          'Unable to validate referral code. Please check your connection and try again.',
+          [
+            {
+              text: 'Try Again'
+            },
+            {
+              text: 'Skip',
+              onPress: () => navigation.navigate('Notifications', { 
+                ...route.params,
+                referralCode: undefined
+              })
+            }
+          ]
+        );
+      } finally {
+        setIsProcessing(false);
+      }
+    } else {
+      navigation.navigate('Notifications', { 
+        ...route.params,
+        referralCode: undefined
+      });
+    }
   };
 
   const handleSkip = () => {
@@ -61,15 +126,22 @@ export const ReferralScreen: React.FC<ReferralScreenProps> = ({ navigation, rout
       </View>
 
       <TouchableOpacity
-        style={styles.continueButton}
+        style={[styles.continueButton, isProcessing && styles.disabledButton]}
         onPress={handleContinue}
+        disabled={isProcessing}
       >
         <LinearGradient
           colors={['#FF6B35', '#FF8C42']}
           style={styles.continueGradient}
         >
-          <Text style={styles.continueText}>Continue</Text>
-          <Ionicons name="arrow-forward" size={24} color="#fff" />
+          {isProcessing ? (
+            <ActivityIndicator size="small" color="#fff" />
+          ) : (
+            <>
+              <Text style={styles.continueText}>Continue</Text>
+              <Ionicons name="arrow-forward" size={24} color="#fff" />
+            </>
+          )}
         </LinearGradient>
       </TouchableOpacity>
     </LinearGradient>
@@ -141,5 +213,8 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 18,
     fontFamily: fonts.bold,
+  },
+  disabledButton: {
+    opacity: 0.7,
   },
 });

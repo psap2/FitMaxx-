@@ -12,7 +12,7 @@ import {
   statusCodes,
 } from '@react-native-google-signin/google-signin';
 import { supabase } from '../utils/supabase';
-import { createUser, getUser, updateUser } from '../server/lib/db/query';
+import { createUser, getUser, updateUser, applyReferralAfterSignup } from '../server/lib/db/query';
 import { User } from '../server/lib/db/schema';
 import { convertHeightToInches, convertWeightToLbs } from '../utils/conversionUtils';
 
@@ -166,10 +166,37 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ navigation, route }) => 
           gender: routeParams.gender,
           height: Math.round(heightInches),
           weight: Math.round(weightLbs),
+          premium: false,
         };
         
         try {
           await createUser(user);
+          
+          // Apply referral code if provided
+          if (routeParams.referralCode) {
+            console.log('🎯 Found referral code in params:', routeParams.referralCode);
+            try {
+              const result = await applyReferralAfterSignup(routeParams.referralCode, data.user.id, supabase);
+              console.log('✅ Referral applied successfully:', result);
+              Alert.alert(
+                'Welcome!',
+                'Your account has been created successfully!',
+                [{ text: 'Continue', onPress: () => navigation.navigate('MainApp') }]
+              );
+              return;
+            } catch (referralError: any) {
+              console.error('❌ Error applying referral:', referralError);
+              // Continue to main app even if referral fails
+              Alert.alert(
+                'Account Created',
+                `Your account has been created successfully! However, there was an issue with the referral code: ${referralError.message}`,
+                [{ text: 'Continue', onPress: () => navigation.navigate('MainApp') }]
+              );
+              return;
+            }
+          } else {
+            console.log('ℹ️ No referral code found in params');
+          }
         } catch (createError: any) {
           console.error('Error creating user:', createError);
           Alert.alert('Error', 'Failed to create account. Please try again.');
