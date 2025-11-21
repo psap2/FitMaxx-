@@ -20,6 +20,7 @@ import { ResultsScreen } from './screens/ResultsScreen';
 import { EditProfileScreen } from './screens/EditProfileScreen';
 import GalleryScreen from './screens/GalleryScreen';
 import { CommentsScreen } from './screens/CommentsScreen';
+import { GoalsScreen } from './screens/GoalsScreen';
 import { RootStackParamList } from './types';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -78,6 +79,7 @@ export default function App() {
         <Stack.Screen name="Gallery" component={GalleryScreen} />
         <Stack.Screen name="EditProfile" component={EditProfileScreen} />
         <Stack.Screen name="Comments" component={CommentsScreen} />
+        <Stack.Screen name="Goals" component={GoalsScreen} />
       </Stack.Navigator>
     </NavigationContainer>
   );

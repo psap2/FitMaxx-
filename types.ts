@@ -57,4 +57,5 @@ export type RootStackParamList = {
   Gallery: undefined;
   EditProfile: undefined;
   Comments: { postId: string };
+  Goals: undefined;
 };

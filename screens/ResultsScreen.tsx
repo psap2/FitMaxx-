@@ -165,8 +165,8 @@ export const ResultsScreen: React.FC<ResultsScreenProps> = ({ navigation, route 
       const referral = await createReferral(userId, supabase);
       
       Alert.alert(
-        'Get Premium Free!',
-        `Share your referral code with a friend to unlock Premium:\n\n${referral.referral_code}\n\nWhen they sign up and use your code, you'll both get Premium access!`,
+        'Your Referral Code',
+        `Share your referral code with a friend to unlock Premium:\n\n${referral.referral_code}\n\nWhen they sign up and use your code, you'll both get Premium access!\n\nNote: This is your permanent referral code - it will be the same each time.`,
         [
           {
             text: 'Copy Code',

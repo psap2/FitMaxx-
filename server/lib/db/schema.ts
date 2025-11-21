@@ -49,5 +49,15 @@ export interface Referral {
   referral_code: string; // unique referral code
 }
 
+export interface Goal {
+  id: string;
+  created_at: string;
+  target_date: string | null; // ISO date string instead of timestamp
+  goal: string;
+  description?: string | null;
+  user: string; // user id
+}
+
 export type ReferralInsert = Omit<Referral, 'id' | 'created_at'>;
+export type GoalInsert = Omit<Goal, 'id' | 'created_at'>;
 

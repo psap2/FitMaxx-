@@ -83,7 +83,22 @@ const generateReferralCode = (): string => {
 };
 
 // Referral functions
-export const createReferral = async (userId: string, client = supabase) => {
+export const getOrCreateReferral = async (userId: string, client = supabase) => {
+    // First, check if user already has a referral code
+    const { data: existingReferral, error: fetchError } = await client
+        .from('referrals')
+        .select('*')
+        .eq('referrer', userId)
+        .single();
+    
+    // If user already has a referral code, return it
+    if (existingReferral && !fetchError) {
+        console.log('Returning existing referral code:', existingReferral.referral_code);
+        return existingReferral;
+    }
+    
+    // If no existing referral code, create a new one
+    console.log('🆕 Creating new referral code for user:', userId);
     const referralCode = generateReferralCode(); // Generate 8-character code
     
     const referralData: ReferralInsert = {
@@ -98,6 +113,9 @@ export const createReferral = async (userId: string, client = supabase) => {
     }
     return data;
 }
+
+// Keep the old function for backward compatibility, but redirect to new one
+export const createReferral = getOrCreateReferral;
 
 export const getReferralByCode = async (referralCode: string, client = supabase) => {
     const { data, error } = await client.from('referrals').select('*').eq('referral_code', referralCode).single();

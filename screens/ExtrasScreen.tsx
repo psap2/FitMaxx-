@@ -43,6 +43,17 @@ export default function ExtrasScreen() {
             <Ionicons name="chevron-forward" size={18} color="rgba(255, 255, 255, 0.6)" />
           </TouchableOpacity>
 
+          <TouchableOpacity
+            style={styles.featureItem}
+            onPress={() => navigation.navigate('Goals')}
+          >
+            <View style={styles.featureLeft}>
+              <Ionicons name="flag" size={24} color="#FF6B35" />
+              <Text style={styles.featureText}>Goals</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={18} color="rgba(255, 255, 255, 0.6)" />
+          </TouchableOpacity>
+
         </View>
       </View>
     </View>
