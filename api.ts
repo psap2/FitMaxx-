@@ -1,4 +1,5 @@
 import { PhysiqueAnalysis } from './types';
+import { Platform } from 'react-native';
 
 // Convert image URI to base64 using fetch (works for all URI types)
 const uriToBase64 = async (uri: string): Promise<string> => {
@@ -44,10 +45,24 @@ export const analyzePhysique = async (imageUri: string): Promise<PhysiqueAnalysi
     const imageBase64 = await uriToBase64(imageUri);
     console.log('Image converted, sending to API...');
 
-    // Call the OpenAI API endpoint
-    const apiUrl = __DEV__ 
-      ? 'http://10.0.2.2:3000/api/openai'
-      : process.env.EXPO_PUBLIC_API_URL || 'https://your-production-url.com/api/openai';
+    // Call the OpenAI API endpoint with platform-specific URLs for local dev
+    const getApiUrl = () => {
+      if (__DEV__) {
+        // Development URLs - different for Android and iOS
+        if (Platform.OS === 'android') {
+          return 'http://10.0.2.2:3000/api/openai'; // Android emulator localhost
+        } else if (Platform.OS === 'ios') {
+          return 'http://localhost:3000/api/openai'; // iOS simulator localhost
+        } else {
+          return 'http://localhost:3000/api/openai'; // Fallback for web/other
+        }
+      } else {
+        // Production URL
+        return process.env.EXPO_PUBLIC_API_URL || 'https://your-production-url.com/api/openai';
+      }
+    };
+
+    const apiUrl = getApiUrl();
 
     // Add timeout to prevent hanging
     const controller = new AbortController();
