@@ -1,7 +1,7 @@
 import { AzureOpenAI } from "openai";
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from '@supabase/supabase-js';
-import { Goal, Post, Comment } from "@/lib/db/schema";
+import { Goal, Post, Comment, User } from "@/lib/db/schema";
 
 export const maxDuration = 60; // 1 minute
 
@@ -11,14 +11,32 @@ const openai = new AzureOpenAI({
   apiVersion: "2024-06-01",
 });
 
-function buildSystemPrompt(userData: { goals: Goal[]; posts: Post[]; comments: Comment[] }): string {
+function buildSystemPrompt(userData: { user: User | null; goals: Goal[]; posts: Post[]; comments: Comment[]; conversationHistory: Array<{ user: string; assistant: string }> }): string {
   let prompt = `You are a personal AI fitness coach helping a user with their fitness journey. You have access to the following information about the user:
   IMPORTANT PRIVACY NOTICE: This image is private and confidential. It is uploaded by the user to their personal fitness tracking app for their own progress monitoring. This is NOT public content, NOT for social media, and NOT for sharing. The user has explicitly consented to this analysis for personal fitness tracking purposes only. You are providing a professional fitness assessment service, similar to a personal trainer reviewing a client's progress photo in a private consultation.
   Make sure you give concise answers and recommend what the user should do to improve their fitness. Recommend goals to set in the goals section of the Extras tab. Recommend to consistently upload everyday progress pictures and add comments to their posts.
   Make sure when recommending to utilize the ratings given to understand the history (ex. if a user's scores have been going down consistently to recognize this)
 
-GOALS:
+
+  REMEMBER YOU ARE THE AI THAT WAS USED TO RATE THE USER'S PHOTO, YOU HAVE ACCESS TO THE USER'S PROGRESS POSTS AND COMMENTS, USE THIS TO YOUR ADVANTAGE.
+USER PROFILE:
 `;
+  if (userData.user) {
+    const user = userData.user;
+    prompt += `Gender: ${user.gender}\n`;
+    if (user.height) {
+      const feet = Math.floor(user.height / 12);
+      const inches = user.height % 12;
+      prompt += `Height: ${feet}'${inches}" (${user.height} inches)\n`;
+    }
+    if (user.weight) {
+      prompt += `Weight: ${user.weight} lbs\n`;
+    }
+  } else {
+    prompt += 'User profile information not available.\n';
+  }
+
+  prompt += '\nGOALS:\n';
   if (userData.goals.length === 0) {
     prompt += 'No goals set yet.\n';
   } else {
@@ -68,7 +86,18 @@ GOALS:
     });
   }
 
-  prompt += `\nYour role is to provide personalized fitness advice, motivation, and guidance based on this information. Be encouraging, professional, and helpful.`;
+  prompt += `\nRECENT CONVERSATION HISTORY:\n`;
+  if (userData.conversationHistory.length === 0) {
+    prompt += 'No previous conversation.\n';
+  } else {
+    userData.conversationHistory.forEach((pair, index) => {
+      prompt += `Exchange ${index + 1}:\n`;
+      prompt += `  User: ${pair.user}\n`;
+      prompt += `  Assistant: ${pair.assistant}\n\n`;
+    });
+  }
+
+  prompt += `\nYour role is to provide personalized fitness advice, motivation, and guidance based on this information. Be encouraging, professional, and helpful. Use the conversation history to maintain context and continuity.`;
 
   return prompt;
 }
@@ -76,7 +105,7 @@ GOALS:
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { message, userId, accessToken } = body;
+    const { message, userId, accessToken, conversationHistory = [] } = body;
 
     if (!message) {
       return NextResponse.json(
@@ -111,6 +140,20 @@ export async function POST(request: NextRequest) {
         },
       }
     );
+
+    // Fetch user data
+    console.log('[Coach Chat] Fetching user data for userId:', userId);
+    const { data: userData, error: userError } = await supabase
+      .from('users')
+      .select('id, gender, height, weight')
+      .eq('id', userId)
+      .single();
+
+    if (userError) {
+      console.error('[Coach Chat] User error:', userError);
+      // Continue even if user fetch fails
+    }
+    console.log('[Coach Chat] User data fetched:', userData ? 'Yes' : 'No');
 
     console.log('[Coach Chat] Fetching goals for user:', userId);
     console.log('[Coach Chat] Goals query: from("goals").select("*").eq("user", userId)');
@@ -204,14 +247,17 @@ export async function POST(request: NextRequest) {
 
     // Build system prompt
     const userDataForPrompt = {
+      user: (userData as User) || null,
       goals: (goals as Goal[]) || [],
       posts: (posts as Post[]) || [],
       comments: allComments,
+      conversationHistory: conversationHistory || [],
     };
     console.log('[Coach Chat] Data for system prompt:', {
       goalsCount: userDataForPrompt.goals.length,
       postsCount: userDataForPrompt.posts.length,
       commentsCount: userDataForPrompt.comments.length,
+      conversationHistoryCount: userDataForPrompt.conversationHistory.length,
     });
 
     const systemPrompt = buildSystemPrompt(userDataForPrompt);

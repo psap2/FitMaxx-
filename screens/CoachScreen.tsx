@@ -134,6 +134,26 @@ export default function CoachScreen() {
         return;
       }
 
+      // Get last 3 message pairs (user + assistant) for context
+      // Exclude the current message we just added (it's the last one)
+      const messagesBeforeCurrent = messages.slice(0, -1);
+      const historyPairs: Array<{ user: string; assistant: string }> = [];
+      
+      // Extract pairs going backwards: look for assistant messages followed by user messages
+      // We'll reverse the order when adding to maintain chronological order
+      for (let i = messagesBeforeCurrent.length - 1; i > 0; i--) {
+        const currentMsg = messagesBeforeCurrent[i];
+        const prevMsg = messagesBeforeCurrent[i - 1];
+        if (currentMsg.role === 'assistant' && prevMsg.role === 'user') {
+          historyPairs.unshift({
+            user: prevMsg.content,
+            assistant: currentMsg.content,
+          });
+          if (historyPairs.length >= 3) break; // Only keep last 3 pairs
+          i--; // Skip the user message in next iteration
+        }
+      }
+
       const baseUrl = getApiBaseUrl();
 
       const response = await fetch(`${baseUrl}/api/coach/chat`, {
@@ -145,6 +165,7 @@ export default function CoachScreen() {
           message: userMessage,
           userId,
           accessToken,
+          conversationHistory: historyPairs.slice(-3), // Last 3 pairs
         }),
       });
 
