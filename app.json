@@ -14,7 +14,7 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.anonymous.fitmaxmobile",
+      "bundleIdentifier":"com.googleusercontent.apps.507850657335-f6knolk41keva0b053ra871qui3teb8u",
       "config": {
         "googleSignIn": {
           "reservedClientId": "com.googleusercontent.apps.507850657335-f6knolk41keva0b053ra871qui3teb8u"

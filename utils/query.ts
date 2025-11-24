@@ -1,5 +1,5 @@
-import { supabase } from "../../../utils/supabase";
-import { Post, User, Comment, Referral, ReferralInsert } from "./schema";
+import { supabase } from "./supabase";
+import { Post, User, Comment, Referral, ReferralInsert } from "../server/lib/db/schema";
 
 export const getUser = async (email: string | undefined) => {
     const { data, error } = await supabase.from('users').select('*').eq('email', email);

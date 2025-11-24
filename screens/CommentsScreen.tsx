@@ -18,7 +18,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { RootStackParamList } from '../types';
 import { fonts } from '../theme/fonts';
 import { supabase } from '../utils/supabase';
-import { getComments, createComment, deleteComment } from '../server/lib/db/query';
+import { getComments, createComment, deleteComment } from '../utils/query';
 import { Comment } from '../server/lib/db/schema';
 
 type CommentsScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'Comments'>;

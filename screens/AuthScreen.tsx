@@ -12,7 +12,7 @@ import {
   statusCodes,
 } from '@react-native-google-signin/google-signin';
 import { supabase } from '../utils/supabase';
-import { createUser, getUser, updateUser, applyReferralAfterSignup } from '../server/lib/db/query';
+import { createUser, getUser, updateUser, applyReferralAfterSignup } from '../utils/query';
 import { User } from '../server/lib/db/schema';
 import { convertHeightToInches, convertWeightToLbs } from '../utils/conversionUtils';
 

@@ -7,7 +7,7 @@ import { RouteProp } from '@react-navigation/native';
 import { ProgressBar } from '../components/ProgressBar';
 import { RootStackParamList } from '../types';
 import { fonts } from '../theme/fonts';
-import { validateReferralCode } from '../server/lib/db/query';
+import { validateReferralCode } from '../utils/query';
 import { supabase } from '../utils/supabase';
 
 type ReferralScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'Referral'>;
