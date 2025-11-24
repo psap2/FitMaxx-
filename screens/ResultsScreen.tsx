@@ -393,43 +393,39 @@ export const ResultsScreen: React.FC<ResultsScreenProps> = ({ navigation, route 
                         )}
                       </View>
                     ))}
-                </View>
-                
-                {/* Premium unlock overlay (only shown for non-premium users) */}
-                {!isPremiumUser && (
-                  <View style={styles.premiumUpgradeOverlay}>
-                    <View style={styles.premiumOverlayContent}>
-                      <View style={styles.premiumUpgradeCard}>
-                        <View style={styles.lockIconContainer}>
-                          <Ionicons name="lock-closed" size={56} color="#FF6B35" />
-                        </View>
-                        <Text style={styles.upgradeTitle}>Unlock Detailed Analysis</Text>
-                        <Text style={styles.upgradeText}>
-                          See individual muscle group scores, advanced insights, and personalized recommendations
-                        </Text>
-                        <TouchableOpacity 
-                          style={styles.upgradeButton}
-                          onPress={handleUpgradePress}
-                          disabled={isCreatingReferral}
-                        >
-                          <LinearGradient colors={['#FF6B35', '#FF8C42']} style={styles.upgradeGradient}>
-                            {isCreatingReferral ? (
-                              <ActivityIndicator size="small" color="#fff" />
-                            ) : (
-                              <>
-                                <Ionicons name="star" size={20} color="#fff" style={styles.upgradeIcon} />
-                                <Text style={styles.upgradeButtonText}>Get Premium</Text>
-                              </>
-                            )}
-                          </LinearGradient>
-                        </TouchableOpacity>
-                        <Text style={styles.upgradeSubtext}>
-                          Join thousands of users getting detailed physique insights
-                        </Text>
+                  
+                  {/* Premium unlock card (only shown for non-premium users) - INSIDE the grid */}
+                  {!isPremiumUser && (
+                    <View style={styles.premiumUpgradeCard}>
+                      <View style={styles.lockIconContainer}>
+                        <Ionicons name="lock-closed" size={48} color="#FF6B35" />
                       </View>
+                      <Text style={styles.upgradeTitle}>Unlock Detailed Analysis</Text>
+                      <Text style={styles.upgradeText}>
+                        See individual muscle group scores, advanced insights, and personalized recommendations for free!
+                      </Text>
+                      <TouchableOpacity 
+                        style={styles.upgradeButton}
+                        onPress={handleUpgradePress}
+                        disabled={isCreatingReferral}
+                      >
+                        <LinearGradient colors={['#FF6B35', '#FF8C42']} style={styles.upgradeGradient}>
+                          {isCreatingReferral ? (
+                            <ActivityIndicator size="small" color="#fff" />
+                          ) : (
+                            <>
+                              <Ionicons name="star" size={20} color="#fff" style={styles.upgradeIcon} />
+                              <Text style={styles.upgradeButtonText}>Get Premium</Text>
+                            </>
+                          )}
+                        </LinearGradient>
+                      </TouchableOpacity>
+                      <Text style={styles.upgradeSubtext}>
+                        Join thousands of users getting detailed physique insights
+                      </Text>
                     </View>
-                  </View>
-                )}
+                  )}
+                </View>
               </View>
             </View>
           )}
@@ -527,7 +523,7 @@ const styles = StyleSheet.create({
   content: {
     paddingHorizontal: 20,
     paddingTop: 60,
-    paddingBottom: 20,
+    paddingBottom: 40,
   },
   backButton: {
     position: 'absolute',
@@ -587,7 +583,7 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
   },
   bodyFatCard: {
-    marginBottom: 20,
+    marginBottom: 24,
     padding: 18,
     borderRadius: 16,
     borderWidth: 1,
@@ -608,7 +604,7 @@ const styles = StyleSheet.create({
     borderRadius: 4,
   },
   summaryCard: {
-    marginBottom: 24,
+    marginBottom: 30,
     padding: 18,
     borderRadius: 16,
     backgroundColor: 'rgba(255, 107, 53, 0.08)',
@@ -628,17 +624,20 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
   premiumContainer: {
-    marginBottom: 30,
+    marginBottom: 40,
+    zIndex: 1,
   },
   premiumTitle: {
     fontSize: 18,
     fontFamily: fonts.bold,
     color: '#fff',
-    marginBottom: 12,
+    marginBottom: 16,
+    paddingBottom: 16,
   },
   premiumContentWrapper: {
     position: 'relative',
     borderRadius: 16,
+    minHeight: 300,
   },
   premiumGrid: {
     flexDirection: 'row',
@@ -650,6 +649,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(15, 15, 20, 0.9)',
     padding: 16,
     gap: 8,
+    minHeight: 300,
   },
   premiumItemWrapper: {
     width: '48%',
@@ -668,21 +668,6 @@ const styles = StyleSheet.create({
     bottom: 0,
     borderRadius: 12,
   },
-  premiumUpgradeOverlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.3)',
-    borderRadius: 16,
-  },
-  premiumOverlayContent: {
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
   premiumItem: {
     backgroundColor: 'rgba(255, 255, 255, 0.05)',
     borderRadius: 12,
@@ -693,10 +678,15 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   premiumUpgradeCard: {
+    position: 'absolute',
+    top: '50%',
+    left: 16,
+    right: 16,
+    transform: [{ translateY: -150 }],
     alignItems: 'center',
-    padding: 32,
+    padding: 24,
     borderRadius: 20,
-    backgroundColor: 'rgba(11, 11, 15, 0.95)',
+    backgroundColor: 'rgba(11, 11, 15, 0.98)',
     borderWidth: 2,
     borderColor: 'rgba(255, 107, 53, 0.4)',
     shadowColor: '#FF6B35',
@@ -704,33 +694,33 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 16,
     elevation: 8,
-    maxWidth: '90%',
+    zIndex: 10,
   },
   lockIconContainer: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
+    width: 70,
+    height: 70,
+    borderRadius: 35,
     backgroundColor: 'rgba(255, 107, 53, 0.1)',
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: 12,
     borderWidth: 2,
     borderColor: 'rgba(255, 107, 53, 0.3)',
   },
   upgradeTitle: {
-    fontSize: 24,
+    fontSize: 22,
     fontFamily: fonts.bold,
     color: '#fff',
-    marginBottom: 12,
+    marginBottom: 10,
     textAlign: 'center',
   },
   upgradeText: {
-    fontSize: 16,
+    fontSize: 15,
     color: 'rgba(255, 255, 255, 0.8)',
     textAlign: 'center',
-    marginBottom: 24,
-    lineHeight: 24,
-    paddingHorizontal: 8,
+    marginBottom: 20,
+    lineHeight: 22,
+    paddingHorizontal: 4,
   },
   upgradeButton: {
     borderRadius: 16,
@@ -767,11 +757,14 @@ const styles = StyleSheet.create({
   },
   suggestionsContainer: {
     marginBottom: 30,
+    marginTop: 20,
     backgroundColor: 'rgba(11, 11, 15, 0.85)',
     borderRadius: 18,
     padding: 18,
     borderWidth: 1,
     borderColor: 'rgba(255, 107, 53, 0.25)',
+    zIndex: 0,
+    position: 'relative',
   },
   suggestionsTitle: {
     fontSize: 20,
