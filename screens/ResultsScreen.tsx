@@ -762,7 +762,7 @@ const styles = StyleSheet.create({
     borderRadius: 18,
     padding: 18,
     borderWidth: 1,
-    borderColor: 'rgba(255, 107, 53, 0.25)',
+    borderColor: 'rgba(255, 107, 53, 0.35)',
     zIndex: 0,
     position: 'relative',
   },

@@ -12,13 +12,13 @@ interface GlassCardProps {
 export const GlassCard: React.FC<GlassCardProps> = ({ 
   children, 
   style, 
-  intensity = 80 
+  intensity = 0 
 }) => {
   return (
     <View style={[styles.container, style]}>
       <BlurView intensity={intensity} style={styles.blur}>
         <LinearGradient
-          colors={['rgba(255, 255, 255, 0.1)', 'rgba(255, 255, 255, 0.05)']}
+          colors={['rgba(255, 107, 53, 0.08)', 'rgba(255, 107, 53, 0.08)']}
           style={styles.gradient}
         >
           {children}
@@ -30,20 +30,20 @@ export const GlassCard: React.FC<GlassCardProps> = ({
 
 const styles = StyleSheet.create({
   container: {
-    borderRadius: 24,
+    borderRadius: 14,
     overflow: 'hidden',
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.2)',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.3,
-    shadowRadius: 16,
-    elevation: 8,
+    borderColor: 'rgba(255, 107, 53, 0.35)',
+    shadowColor: 'transparent',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0,
+    shadowRadius: 0,
+    elevation: 0,
   },
   blur: {
     overflow: 'hidden',
   },
   gradient: {
-    padding: 20,
+    padding: 12,
   },
 });
