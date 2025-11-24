@@ -44,8 +44,9 @@ CRITICAL RATING RULES:
   - The area is obscured by clothing, shadows, or poor lighting
   - The angle doesn't allow proper assessment of that muscle group
   - You cannot confidently evaluate the development of that specific muscle
+  MAKE SURE TO RATE IF YOU DO SEE A MUSLCE GROUP, WE WANT AS MUCH FOR THE USER AS POSSIBLE
 - For example:
-  - Front pose: Rate chest, shoulders, biceps, forearms, quads (if visible), but set back, hamstrings, calves to null if not clearly visible
+  - Front pose: Rate chest, shoulders, biceps, forearms, quads (if visible), but set back, hamstrings, calves to null if TOO BLURRY OR NOT VISIBLE
   - Back pose: Rate back, traps, triceps, hamstrings (if visible), but set chest, biceps to null
   - Side pose: Rate shoulders, chest profile, but many others may be null depending on visibility
 - Be conservative - if you're unsure about a muscle group's development due to angle/lighting/clothing, set it to null
