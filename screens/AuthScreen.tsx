@@ -12,7 +12,7 @@ import {
   statusCodes,
 } from '@react-native-google-signin/google-signin';
 import { supabase } from '../utils/supabase';
-import { createUser, getUser, updateUser, applyReferralAfterSignup } from '../utils/query';
+import { createUser, getUser, updateUser, applyReferralAfterSignup } from '../utils/api';
 import { User } from '../server/lib/db/schema';
 import { convertHeightToInches, convertWeightToLbs } from '../utils/conversionUtils';
 
@@ -176,7 +176,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ navigation, route }) => 
           if (routeParams.referralCode) {
             console.log('🎯 Found referral code in params:', routeParams.referralCode);
             try {
-              const result = await applyReferralAfterSignup(routeParams.referralCode, data.user.id, supabase);
+              const result = await applyReferralAfterSignup(routeParams.referralCode, data.user.id);
               console.log('✅ Referral applied successfully:', result);
               Alert.alert(
                 'Welcome!',

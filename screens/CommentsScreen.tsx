@@ -18,7 +18,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { RootStackParamList } from '../types';
 import { fonts } from '../theme/fonts';
 import { supabase } from '../utils/supabase';
-import { getComments, createComment, deleteComment } from '../utils/query';
+import { getComments, createComment, deleteComment } from '../utils/api';
 import { Comment } from '../server/lib/db/schema';
 
 type CommentsScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'Comments'>;
@@ -98,7 +98,7 @@ export const CommentsScreen: React.FC<CommentsScreenProps> = ({ navigation, rout
           onPress: async () => {
             try {
               if (!currentUserId) return;
-              await deleteComment(commentId, currentUserId);
+              await deleteComment(commentId);
               setComments(comments.filter((c) => c.id !== commentId));
             } catch (error: any) {
               console.error('Error deleting comment:', error);

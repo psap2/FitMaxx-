@@ -15,7 +15,7 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { supabase } from '../utils/supabase';
 import { RootStackParamList } from '../types';
 import { fonts } from '../theme/fonts';
-import { getUser } from '../utils/query';
+import { getUser } from '../utils/api';
 
 type GalleryNavigationProp = NativeStackNavigationProp<RootStackParamList, 'Gallery'>;
 

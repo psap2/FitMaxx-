@@ -21,7 +21,7 @@ import { GlassCard } from '../components/GlassCard';
 import { RootStackParamList } from '../types';
 import { fonts } from '../theme/fonts';
 import { supabase } from '../utils/supabase';
-import { createPost, getUser, createReferral } from '../utils/query';
+import { createPost, getUser, createReferral } from '../utils/api';
 
 type ResultsScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'Results'>;
 type ResultsScreenRouteProp = RouteProp<RootStackParamList, 'Results'>;
@@ -189,7 +189,7 @@ export const ResultsScreen: React.FC<ResultsScreenProps> = ({ navigation, route 
         return;
       }
 
-      const referral = await createReferral(userId, supabase);
+      const referral = await createReferral(userId);
       
       Alert.alert(
         'Your Referral Code',

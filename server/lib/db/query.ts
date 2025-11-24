@@ -1,24 +1,27 @@
-import { supabase } from "./supabase";
-import { Post, User, Comment, Referral, ReferralInsert } from "../server/lib/db/schema";
+import { supabase, createUserClient } from "./supabase";
+import { Post, User, Comment, Referral, ReferralInsert } from "./schema";
 
-export const getUser = async (email: string | undefined) => {
-    const { data, error } = await supabase.from('users').select('*').eq('email', email);
+export const getUser = async (email: string | undefined, token?: string) => {
+    const client = token ? createUserClient(token) : supabase;
+    const { data, error } = await client.from('users').select('*').eq('email', email);
     if (error) {
         throw error;
     }
     return data;
 }
 
-export const createUser = async (user: User) => {
-    const { data, error } = await supabase.from('users').insert(user);
+export const createUser = async (user: User, token?: string) => {
+    const client = token ? createUserClient(token) : supabase;
+    const { data, error } = await client.from('users').insert(user);
     if (error) {
         throw error;
     }
     return data;
 }
 
-export const updateUser = async (userId: string, updates: Partial<User>, client = supabase) => {
-    const { data, error } = await supabase.from('users').update(updates).eq('id', userId);
+export const updateUser = async (userId: string, updates: Partial<User>, token?: string) => {
+    const client = token ? createUserClient(token) : supabase;
+    const { data, error } = await client.from('users').update(updates).eq('id', userId);
     if (error) {
         throw error;
     }
@@ -27,8 +30,9 @@ export const updateUser = async (userId: string, updates: Partial<User>, client 
 
 type PostInsert = Omit<Post, 'id' | 'created_at'>;
 
-export const createPost = async (post: PostInsert) => {
-    const { data, error } = await supabase.from('posts').insert(post).select().single();
+export const createPost = async (post: PostInsert, token?: string) => {
+    const client = token ? createUserClient(token) : supabase;
+    const { data, error } = await client.from('posts').insert(post).select().single();
     if (error) {
         throw error;
     }
@@ -36,8 +40,9 @@ export const createPost = async (post: PostInsert) => {
 }
 
 // Comment functions
-export const getComments = async (postId: string) => {
-    const { data, error } = await supabase
+export const getComments = async (postId: string, token?: string) => {
+    const client = token ? createUserClient(token) : supabase;
+    const { data, error } = await client
         .from('comments')
         .select('*')
         .eq('post', postId)
@@ -50,16 +55,18 @@ export const getComments = async (postId: string) => {
 
 type CommentInsert = Omit<Comment, 'id' | 'created_at'>;
 
-export const createComment = async (comment: CommentInsert) => {
-    const { data, error } = await supabase.from('comments').insert(comment).select().single();
+export const createComment = async (comment: CommentInsert, token?: string) => {
+    const client = token ? createUserClient(token) : supabase;
+    const { data, error } = await client.from('comments').insert(comment).select().single();
     if (error) {
         throw error;
     }
     return data;
 }
 
-export const deleteComment = async (commentId: string, userId: string) => {
-    const { data, error } = await supabase
+export const deleteComment = async (commentId: string, userId: string, token?: string) => {
+    const client = token ? createUserClient(token) : supabase;
+    const { data, error } = await client
         .from('comments')
         .delete()
         .eq('id', commentId)
@@ -83,7 +90,8 @@ const generateReferralCode = (): string => {
 };
 
 // Referral functions
-export const getOrCreateReferral = async (userId: string, client = supabase) => {
+export const getOrCreateReferral = async (userId: string, token?: string) => {
+    const client = token ? createUserClient(token) : supabase;
     // First, check if user already has a referral code
     const { data: existingReferral, error: fetchError } = await client
         .from('referrals')
@@ -117,7 +125,8 @@ export const getOrCreateReferral = async (userId: string, client = supabase) => 
 // Keep the old function for backward compatibility, but redirect to new one
 export const createReferral = getOrCreateReferral;
 
-export const getReferralByCode = async (referralCode: string, client = supabase) => {
+export const getReferralByCode = async (referralCode: string, token?: string) => {
+    const client = token ? createUserClient(token) : supabase;
     const { data, error } = await client.from('referrals').select('*').eq('referral_code', referralCode).single();
     if (error) {
         throw error;
@@ -125,9 +134,9 @@ export const getReferralByCode = async (referralCode: string, client = supabase)
     return data;
 }
 
-export const validateReferralCode = async (referralCode: string, client = supabase) => {
+export const validateReferralCode = async (referralCode: string, token?: string) => {
     try {
-        const referral = await getReferralByCode(referralCode, client);
+        const referral = await getReferralByCode(referralCode, token);
         
         // Check if referral exists and is unused
         if (!referral) {
@@ -144,11 +153,11 @@ export const validateReferralCode = async (referralCode: string, client = supaba
     }
 }
 
-export const applyReferralAfterSignup = async (referralCode: string, referredUserId: string, client = supabase) => {
+export const applyReferralAfterSignup = async (referralCode: string, referredUserId: string) => {
     console.log('🎯 Applying referral:', { referralCode, referredUserId });
     
     // First, get the referral to check if it exists and is unused
-    const referral = await getReferralByCode(referralCode, client);
+    const referral = await getReferralByCode(referralCode);
     console.log('📋 Found referral:', referral);
     
     if (!referral) {
@@ -165,7 +174,7 @@ export const applyReferralAfterSignup = async (referralCode: string, referredUse
     
     // Update the referral with the referred user
     console.log('🔄 Updating referral table...');
-    const { error: updateError } = await client
+    const { error: updateError } = await supabase
         .from('referrals')
         .update({ referred: referredUserId })
         .eq('referral_code', referralCode);
@@ -178,7 +187,7 @@ export const applyReferralAfterSignup = async (referralCode: string, referredUse
     
     // First, check if the referrer user exists
     console.log('🔍 Checking if referrer exists:', referral.referrer);
-    const { data: referrerUser, error: findError } = await client
+    const { data: referrerUser, error: findError } = await supabase
         .from('users')
         .select('*')
         .eq('id', referral.referrer)
@@ -194,13 +203,13 @@ export const applyReferralAfterSignup = async (referralCode: string, referredUse
     // Grant premium to the referrer using updateUser function
     console.log('🌟 Granting premium to referrer:', referral.referrer);
     try {
-        const updatedUser = await updateUser(referral.referrer, { premium: true }, client);
+        const updatedUser = await updateUser(referral.referrer, { premium: true });
         console.log('✅ Premium granted successfully via updateUser:', updatedUser);
     } catch (updateError) {
         console.error('❌ Error with updateUser, trying direct update:', updateError);
         
         // Fallback to direct update
-        const { data: premiumData, error: premiumError } = await client
+        const { data: premiumData, error: premiumError } = await supabase
             .from('users')
             .update({ premium: true })
             .eq('id', referral.referrer)
@@ -215,7 +224,7 @@ export const applyReferralAfterSignup = async (referralCode: string, referredUse
     }
     
     // Verify the update worked
-    const { data: verifyUser } = await client
+    const { data: verifyUser } = await supabase
         .from('users')
         .select('premium, id, email')
         .eq('id', referral.referrer)
@@ -229,48 +238,12 @@ export const applyReferralAfterSignup = async (referralCode: string, referredUse
 // Keep the old function for backward compatibility
 export const useReferralCode = applyReferralAfterSignup;
 
-export const getUserReferrals = async (userId: string, client = supabase) => {
+export const getUserReferrals = async (userId: string, token?: string) => {
+    const client = token ? createUserClient(token) : supabase;
     const { data, error } = await client.from('referrals').select('*').eq('referrer', userId);
     if (error) {
         throw error;
     }
     return data;
-}
-
-// Test function to verify premium updates work
-export const testPremiumUpdate = async (userId: string, client = supabase) => {
-    console.log('🧪 Testing premium update for user:', userId);
-    
-    // First check current status
-    const { data: beforeData } = await client
-        .from('users')
-        .select('premium, id, email')
-        .eq('id', userId)
-        .single();
-    console.log('📊 Before update:', beforeData);
-    
-    // Try to update
-    const { data: updateData, error: updateError } = await client
-        .from('users')
-        .update({ premium: true })
-        .eq('id', userId)
-        .select();
-    
-    if (updateError) {
-        console.error('❌ Update error:', updateError);
-        throw updateError;
-    }
-    
-    console.log('✅ Update result:', updateData);
-    
-    // Verify the change
-    const { data: afterData } = await client
-        .from('users')
-        .select('premium, id, email')
-        .eq('id', userId)
-        .single();
-    console.log('📊 After update:', afterData);
-    
-    return { before: beforeData, after: afterData, updateResult: updateData };
 }
 
