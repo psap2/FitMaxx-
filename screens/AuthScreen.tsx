@@ -174,10 +174,10 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ navigation, route }) => 
           
           // Apply referral code if provided
           if (routeParams.referralCode) {
-            console.log('🎯 Found referral code in params:', routeParams.referralCode);
+            console.log('Found referral code in params:', routeParams.referralCode);
             try {
               const result = await applyReferralAfterSignup(routeParams.referralCode, data.user.id, supabase);
-              console.log('✅ Referral applied successfully:', result);
+              console.log('Referral applied successfully:', result);
               Alert.alert(
                 'Welcome!',
                 'Your account has been created successfully!',
@@ -185,7 +185,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ navigation, route }) => 
               );
               return;
             } catch (referralError: any) {
-              console.error('❌ Error applying referral:', referralError);
+              console.error('Error applying referral:', referralError);
               // Continue to main app even if referral fails
               Alert.alert(
                 'Account Created',

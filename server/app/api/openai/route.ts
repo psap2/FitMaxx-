@@ -38,19 +38,15 @@ Your task is to analyze the physique image and provide a comprehensive fitness a
 }
 
 CRITICAL RATING RULES:
-- ONLY rate muscle groups that are CLEARLY VISIBLE and well-lit in the image
+- RATE MUSCLES AS MUCH AS POSSIBLE, WE WANT AS MUCH FOR THE USER AS POSSIBLE
 - Set muscle group scores to null if:
   - The muscle group is not visible (e.g., back muscles in a front-facing photo)
-  - The area is obscured by clothing, shadows, or poor lighting
-  - The angle doesn't allow proper assessment of that muscle group
-  - You cannot confidently evaluate the development of that specific muscle
+  - The muscle group is too blurry or not visible
   MAKE SURE TO RATE IF YOU DO SEE A MUSLCE GROUP, WE WANT AS MUCH FOR THE USER AS POSSIBLE
 - For example:
   - Front pose: Rate chest, shoulders, biceps, forearms, quads (if visible), but set back, hamstrings, calves to null if TOO BLURRY OR NOT VISIBLE
   - Back pose: Rate back, traps, triceps, hamstrings (if visible), but set chest, biceps to null
   - Side pose: Rate shoulders, chest profile, but many others may be null depending on visibility
-- Be conservative - if you're unsure about a muscle group's development due to angle/lighting/clothing, set it to null
-- Only provide ratings for muscle groups you can assess with confidence
 
 Be professional, constructive, and encouraging. Focus on fitness and physique development.`;
 
