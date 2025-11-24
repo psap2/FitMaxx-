@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getUser, createUser } from '../../../lib/db/query';
 import { getAuthUser } from '../../../lib/auth';
+import { supabaseAdmin } from '../../../lib/db/supabase';
 import { User } from '../../../lib/db/schema';
 
 export async function GET(request: NextRequest) {
@@ -45,6 +46,16 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    // Verify user is authenticated (they just signed in with Supabase)
+    const auth = await getAuthUser(request);
+    
+    if (!auth) {
+      return NextResponse.json(
+        { error: 'Unauthorized - must be authenticated' },
+        { status: 401 }
+      );
+    }
+
     const body = await request.json();
     const user: User = body;
 
@@ -55,7 +66,40 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const data = await createUser(user);
+    // Verify user can only create their own profile
+    if (user.id !== auth.user.id) {
+      return NextResponse.json(
+        { error: 'Forbidden: You can only create your own profile' },
+        { status: 403 }
+      );
+    }
+
+    // Verify email matches authenticated user
+    if (user.email !== auth.user.email) {
+      return NextResponse.json(
+        { error: 'Forbidden: Email must match authenticated user' },
+        { status: 403 }
+      );
+    }
+
+    // Use admin client for user creation during signup (bypasses RLS)
+    if (!supabaseAdmin) {
+      return NextResponse.json(
+        { error: 'Server configuration error: Admin client not available' },
+        { status: 500 }
+      );
+    }
+
+    const { data, error } = await supabaseAdmin
+      .from('users')
+      .insert(user)
+      .select();
+
+    if (error) {
+      console.error('Error creating user:', error);
+      throw error;
+    }
+
     return NextResponse.json(data);
   } catch (error: any) {
     console.error('Error creating user:', error);

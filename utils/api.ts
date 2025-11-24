@@ -22,7 +22,7 @@ const getApiUrl = () => {
 const API_URL = getApiUrl();
 
 // Helper function to make API calls with auth
-async function apiCall(endpoint: string, options: RequestInit = {}) {
+export async function apiCall(endpoint: string, options: RequestInit = {}) {
   const { data: session } = await supabase.auth.getSession();
   const token = session.session?.access_token;
 
