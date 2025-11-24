@@ -16,7 +16,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { BlurView } from '@react-native-community/blur';
 import { fonts } from '../theme/fonts';
 import { supabase } from '../utils/supabase';
-import { getUser, createReferral } from '../utils/query';
+import { getUser, createReferral } from '../utils/apiClient';
 
 const getApiBaseUrl = (): string => {
   if (__DEV__) {
@@ -92,7 +92,7 @@ export default function CoachScreen() {
         return;
       }
 
-      const referral = await createReferral(userId, supabase);
+      const referral = await createReferral(userId);
       
       Alert.alert(
         'Your Referral Code',

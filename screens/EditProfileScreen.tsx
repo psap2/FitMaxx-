@@ -15,7 +15,7 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../types';
 import { fonts } from '../theme/fonts';
 import { supabase } from '../utils/supabase';
-import { updateUser } from '../utils/query';
+import { updateUser } from '../utils/apiClient';
 
 type EditProfileNavigationProp = NativeStackNavigationProp<RootStackParamList>;
 

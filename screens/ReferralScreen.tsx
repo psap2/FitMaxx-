@@ -7,7 +7,7 @@ import { RouteProp } from '@react-navigation/native';
 import { ProgressBar } from '../components/ProgressBar';
 import { RootStackParamList } from '../types';
 import { fonts } from '../theme/fonts';
-import { validateReferralCode } from '../utils/query';
+import { validateReferralCode } from '../utils/apiClient';
 import { supabase } from '../utils/supabase';
 
 type ReferralScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'Referral'>;
@@ -27,7 +27,7 @@ export const ReferralScreen: React.FC<ReferralScreenProps> = ({ navigation, rout
       setIsProcessing(true);
       try {
         // Validate referral code without requiring sign-in
-        const validation = await validateReferralCode(referralCode.trim().toUpperCase(), supabase);
+        const validation = await validateReferralCode(referralCode.trim().toUpperCase());
         
         if (validation.valid) {
           Alert.alert(
