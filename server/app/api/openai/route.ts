@@ -55,7 +55,7 @@ Be professional, constructive, and encouraging. Focus on fitness and physique de
 
 export async function POST(request: NextRequest) {
   try {
-    console.log('🔄 OpenAI API endpoint called - starting analysis...');
+    console.log('OpenAI API endpoint called - starting analysis...');
     const body = await request.json();
     const { imageBase64, imageUrl } = body;
 
@@ -81,7 +81,7 @@ export async function POST(request: NextRequest) {
           },
         };
 
-    console.log('🤖 Sending request to OpenAI Vision API...');
+    console.log('Sending request to OpenAI Vision API...');
     const startTime = Date.now();
     
     const response = await openai.chat.completions.create({
@@ -107,7 +107,7 @@ export async function POST(request: NextRequest) {
     });
     
     const duration = Date.now() - startTime;
-    console.log(`✅ OpenAI API responded in ${duration}ms`);
+    console.log(`OpenAI API responded in ${duration}ms`);
 
     const content = response.choices[0]?.message?.content;
     if (!content) {
@@ -129,10 +129,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    console.log('🎯 Analysis completed successfully, returning results');
+    console.log('Analysis completed successfully, returning results');
     return NextResponse.json(analysis);
   } catch (error: any) {
-    console.error("❌ OpenAI API error:", error);
+    console.error("OpenAI API error:", error);
     
     // Provide specific error messages for common issues
     let errorMessage = "Failed to analyze image";
@@ -153,6 +153,7 @@ export async function POST(request: NextRequest) {
   }
 }
 
+// This is for testing
 export async function GET() {
   try {
     const response = await openai.chat.completions.create({
