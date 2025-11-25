@@ -1,5 +1,5 @@
 import { supabase, createUserClient } from "./supabase";
-import { Post, User, Comment, Referral, ReferralInsert } from "./schema";
+import { Post, User, Comment, Referral, ReferralInsert, Goal, GoalInsert } from "./schema";
 
 export const getUser = async (email: string | undefined, token?: string) => {
     const client = token ? createUserClient(token) : supabase;
@@ -241,6 +241,44 @@ export const useReferralCode = applyReferralAfterSignup;
 export const getUserReferrals = async (userId: string, token?: string) => {
     const client = token ? createUserClient(token) : supabase;
     const { data, error } = await client.from('referrals').select('*').eq('referrer', userId);
+    if (error) {
+        throw error;
+    }
+    return data;
+}
+
+// Goal functions
+export const getGoals = async (userId: string, token?: string) => {
+    const client = token ? createUserClient(token) : supabase;
+    const { data, error } = await client
+        .from('goals')
+        .select('*')
+        .eq('user', userId)
+        .order('created_at', { ascending: false });
+    if (error) {
+        throw error;
+    }
+    return data;
+}
+
+export const createGoal = async (goal: GoalInsert, token?: string) => {
+    const client = token ? createUserClient(token) : supabase;
+    const { data, error } = await client.from('goals').insert(goal).select().single();
+    if (error) {
+        throw error;
+    }
+    return data;
+}
+
+export const deleteGoal = async (goalId: string, userId: string, token?: string) => {
+    const client = token ? createUserClient(token) : supabase;
+    const { data, error } = await client
+        .from('goals')
+        .delete()
+        .eq('id', goalId)
+        .eq('user', userId)
+        .select()
+        .single();
     if (error) {
         throw error;
     }

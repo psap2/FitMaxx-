@@ -18,7 +18,8 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import { RootStackParamList } from '../types';
 import { fonts } from '../theme/fonts';
 import { supabase } from '../utils/supabase';
-import { Goal } from '../server/lib/db/schema';
+import { getGoals, createGoal, deleteGoal } from '../utils/api';
+import { Goal, GoalInsert } from '../server/lib/db/schema';
 
 type GoalsScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'Goals'>;
 
@@ -48,16 +49,7 @@ export const GoalsScreen: React.FC<GoalsScreenProps> = ({ navigation }) => {
         return;
       }
 
-      const { data, error } = await supabase
-        .from('goals')
-        .select('id, created_at, target_date, goal, description, user')
-        .eq('user', userId)
-        .order('created_at', { ascending: false });
-
-      if (error) {
-        throw error;
-      }
-
+      const data = await getGoals(userId);
       setGoals(data || []);
     } catch (error) {
       console.error('Error fetching goals:', error);
@@ -95,18 +87,14 @@ export const GoalsScreen: React.FC<GoalsScreenProps> = ({ navigation }) => {
         targetDateString = selectedDate.toISOString().split('T')[0]; // YYYY-MM-DD format
       }
 
-      const { error } = await supabase
-        .from('goals')
-        .insert({
-          goal: newGoal.trim(),
-          description: newDescription.trim() || null,
-          target_date: targetDateString,
-          user: userId,
-        });
+      const goalData: GoalInsert = {
+        goal: newGoal.trim(),
+        description: newDescription.trim() || null,
+        target_date: targetDateString,
+        user: userId,
+      };
 
-      if (error) {
-        throw error;
-      }
+      await createGoal(goalData);
 
       setNewGoal('');
       setNewDescription('');
@@ -150,15 +138,7 @@ export const GoalsScreen: React.FC<GoalsScreenProps> = ({ navigation }) => {
           style: 'destructive',
           onPress: async () => {
             try {
-              const { error } = await supabase
-                .from('goals')
-                .delete()
-                .eq('id', goalId);
-
-              if (error) {
-                throw error;
-              }
-
+              await deleteGoal(goalId);
               fetchGoals();
             } catch (error) {
               console.error('Error deleting goal:', error);

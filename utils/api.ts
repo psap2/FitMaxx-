@@ -129,3 +129,21 @@ export const getUserReferrals = async (userId: string) => {
   return apiCall(`/referrals?userId=${encodeURIComponent(userId)}`, { method: 'GET' });
 };
 
+// Goal functions
+export const getGoals = async (userId: string) => {
+  return apiCall(`/goals?userId=${encodeURIComponent(userId)}`, { method: 'GET' });
+};
+
+export const createGoal = async (goal: any) => {
+  return apiCall('/goals', {
+    method: 'POST',
+    body: JSON.stringify(goal),
+  });
+};
+
+export const deleteGoal = async (goalId: string) => {
+  return apiCall(`/goals/${goalId}`, {
+    method: 'DELETE',
+  });
+};
+
