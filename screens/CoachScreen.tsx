@@ -156,50 +156,8 @@ export default function CoachScreen() {
     );
   }
 
-  if (!isPremiumUser) {
-    return (
-      <LinearGradient colors={['#0B0B0F', '#0B0B0F']} style={styles.container}>
-        <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
-          <View style={styles.premiumContentWrapper}>
-            <View style={styles.premiumGrid}>
-              {/* Placeholder for premium content */}
-            </View>
-            
-            <View style={styles.premiumUpgradeCard}>
-              <View style={styles.lockIconContainer}>
-                <Ionicons name="lock-closed" size={48} color="#FF6B35" />
-              </View>
-              <Text style={styles.upgradeTitle}>Unlock AI Coach</Text>
-              <Text style={styles.upgradeText}>
-                Get personalized fitness coaching based on your goals, progress posts, and notes. Your AI coach will help you stay motivated and reach your fitness goals!
-              </Text>
-              <TouchableOpacity 
-                style={styles.upgradeButton}
-                onPress={handleUpgradePress}
-                disabled={isCreatingReferral}
-              >
-                <LinearGradient colors={['#FF6B35', '#FF8C42']} style={styles.upgradeGradient}>
-                  {isCreatingReferral ? (
-                    <ActivityIndicator size="small" color="#fff" />
-                  ) : (
-                    <>
-                      <Ionicons name="star" size={20} color="#fff" style={styles.upgradeIcon} />
-                      <Text style={styles.upgradeButtonText}>Get Premium</Text>
-                    </>
-                  )}
-                </LinearGradient>
-              </TouchableOpacity>
-              <Text style={styles.upgradeSubtext}>
-                Join thousands of users getting personalized AI coaching
-              </Text>
-            </View>
-          </View>
-        </ScrollView>
-      </LinearGradient>
-    );
-  }
-
-  return (
+  // Render the coach interface (blurred for non-premium users)
+  const coachInterface = (
     <LinearGradient colors={['#0B0B0F', '#0B0B0F']} style={styles.container}>
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -246,23 +204,75 @@ export default function CoachScreen() {
             onChangeText={setInputMessage}
             multiline
             maxLength={500}
-            editable={!sending}
+            editable={!sending && isPremiumUser}
           />
           <TouchableOpacity
-            style={[styles.sendButton, (!inputMessage.trim() || sending) && styles.sendButtonDisabled]}
+            style={[styles.sendButton, (!inputMessage.trim() || sending || !isPremiumUser) && styles.sendButtonDisabled]}
             onPress={handleSendMessage}
-            disabled={!inputMessage.trim() || sending}
+            disabled={!inputMessage.trim() || sending || !isPremiumUser}
           >
             <Ionicons 
               name="send" 
               size={20} 
-              color={(!inputMessage.trim() || sending) ? "rgba(255, 255, 255, 0.3)" : "#fff"} 
+              color={(!inputMessage.trim() || sending || !isPremiumUser) ? "rgba(255, 255, 255, 0.3)" : "#fff"} 
             />
           </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>
     </LinearGradient>
   );
+
+  if (!isPremiumUser) {
+    return (
+      <View style={styles.container}>
+        {/* Blurred coach interface as background */}
+        <View style={styles.blurredBackground}>
+          {coachInterface}
+          <BlurView
+            style={StyleSheet.absoluteFill}
+            blurType="dark"
+            blurAmount={8}
+            reducedTransparencyFallbackColor="rgba(11, 11, 15, 0.6)"
+          />
+        </View>
+        
+        {/* Premium upgrade card overlay */}
+        <View style={styles.premiumOverlay}>
+          <View style={styles.premiumUpgradeCard}>
+            <View style={styles.lockIconContainer}>
+              <Ionicons name="lock-closed" size={48} color="#FF6B35" />
+            </View>
+            <Text style={styles.upgradeTitle}>Unlock AI Coach</Text>
+            <Text style={styles.upgradeText}>
+              Get personalized fitness coaching based on your goals, progress posts, and notes. Your AI coach will help you stay motivated and reach your fitness goals!
+            </Text>
+            <TouchableOpacity 
+              style={styles.upgradeButton}
+              onPress={handleUpgradePress}
+              disabled={isCreatingReferral}
+            >
+              <LinearGradient colors={['#FF6B35', '#FF8C42']} style={styles.upgradeGradient}>
+                {isCreatingReferral ? (
+                  <ActivityIndicator size="small" color="#fff" />
+                ) : (
+                  <>
+                    <Ionicons name="star" size={20} color="#fff" style={styles.upgradeIcon} />
+                    <Text style={styles.upgradeButtonText}>Get Premium</Text>
+                  </>
+                )}
+              </LinearGradient>
+            </TouchableOpacity>
+            <Text style={styles.upgradeSubtext}>
+              Join thousands of users getting personalized AI coaching
+            </Text>
+          </View>
+        </View>
+      </View>
+    );
+  }
+
+  // For premium users, show the interface directly
+  return coachInterface;
 }
 
 const styles = StyleSheet.create({
@@ -351,36 +361,21 @@ const styles = StyleSheet.create({
   sendButtonDisabled: {
     backgroundColor: 'rgba(255, 107, 53, 0.3)',
   },
-  scrollView: {
+  blurredBackground: {
     flex: 1,
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
   },
-  scrollContent: {
-    flexGrow: 1,
+  premiumOverlay: {
+    flex: 1,
     justifyContent: 'center',
-  },
-  premiumContentWrapper: {
-    position: 'relative',
-    borderRadius: 16,
-    minHeight: 300,
-  },
-  premiumGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 107, 53, 0.25)',
-    backgroundColor: 'rgba(15, 15, 20, 0.9)',
-    padding: 16,
-    gap: 8,
-    minHeight: 300,
+    alignItems: 'center',
+    zIndex: 100,
   },
   premiumUpgradeCard: {
-    position: 'absolute',
-    top: '50%',
-    left: 20,
-    right: 20,
-    transform: [{ translateY: -150 }],
     alignItems: 'center',
     padding: 24,
     borderRadius: 20,
@@ -392,7 +387,8 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 16,
     elevation: 8,
-    zIndex: 10,
+    marginHorizontal: 20,
+    maxWidth: 400,
   },
   lockIconContainer: {
     width: 70,
