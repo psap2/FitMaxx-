@@ -7,7 +7,7 @@ const BLOCKED_FIELDS = ['premium', 'email', 'id', 'created_at'];
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const auth = await getAuthUser(request);
@@ -19,8 +19,11 @@ export async function POST(
       );
     }
 
+    // Await params before accessing properties (Next.js 15+ requirement)
+    const { id } = await params;
+
     // Verify user can only update their own data
-    if (auth.user.id !== params.id) {
+    if (auth.user.id !== id) {
       return NextResponse.json(
         { error: 'Forbidden: You can only update your own profile' },
         { status: 403 }
@@ -38,7 +41,7 @@ export async function POST(
       }
     }
 
-    const data = await updateUser(params.id, filteredUpdates, auth.token);
+    const data = await updateUser(id, filteredUpdates, auth.token);
     return NextResponse.json(data);
   } catch (error: any) {
     console.error('Error updating user:', error);

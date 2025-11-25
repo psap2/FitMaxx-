@@ -4,7 +4,7 @@ import { getAuthUser } from '../../../../lib/auth';
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const auth = await getAuthUser(request);
@@ -16,6 +16,9 @@ export async function DELETE(
       );
     }
 
+    // Await params before accessing properties (Next.js 15+ requirement)
+    const { id } = await params;
+
     // First, verify the comment belongs to the authenticated user
     // We need to get the comment to check ownership
     const { createUserClient } = await import('../../../../lib/db/supabase');
@@ -23,7 +26,7 @@ export async function DELETE(
     const { data: comment, error: fetchError } = await userClient
       .from('comments')
       .select('user')
-      .eq('id', params.id)
+      .eq('id', id)
       .single();
 
     if (fetchError || !comment) {
@@ -40,7 +43,7 @@ export async function DELETE(
       );
     }
 
-    const data = await deleteComment(params.id, auth.user.id, auth.token);
+    const data = await deleteComment(id, auth.user.id, auth.token);
     return NextResponse.json(data);
   } catch (error: any) {
     console.error('Error deleting comment:', error);
