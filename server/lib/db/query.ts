@@ -39,6 +39,21 @@ export const createPost = async (post: PostInsert, token?: string) => {
     return data;
 }
 
+export const deletePost = async (postId: string, userId: string, token?: string) => {
+    const client = token ? createUserClient(token) : supabase;
+    const { data, error } = await client
+        .from('posts')
+        .delete()
+        .eq('id', postId)
+        .eq('user_id', userId)
+        .select()
+        .single();
+    if (error) {
+        throw error;
+    }
+    return data;
+}
+
 // Comment functions
 export const getComments = async (postId: string, token?: string) => {
     const client = token ? createUserClient(token) : supabase;
