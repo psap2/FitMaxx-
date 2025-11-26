@@ -19,6 +19,7 @@ import { fonts } from '../theme/fonts';
 import { supabase } from '../utils/supabase';
 import { Ionicons } from '@expo/vector-icons';
 import { useAnalysis } from '../contexts/AnalysisContext';
+import { PhysiqueAnalysis } from '../types';
 import { GlassCard } from '../components/GlassCard';
 
 type HomeScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'Home'>;
@@ -31,8 +32,11 @@ const { width, height } = Dimensions.get('window');
 
 export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
-  const { startAnalysis, state } = useAnalysis();
+  const { startAnalysis, completeAnalysis, state } = useAnalysis();
   const isAnalyzing = state.isAnalyzing;
+  const timeoutRef = React.useRef<NodeJS.Timeout | null>(null);
+  const directResponseRef = React.useRef<PhysiqueAnalysis | null>(null);
+  const currentAnalysisIdRef = React.useRef<string | null>(null);
 
   const handleBack = () => {
     navigation.goBack();
@@ -105,6 +109,12 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
       return;
     }
 
+    // Clear any existing timeout
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+      timeoutRef.current = null;
+    }
+
     try {
       const { data: session } = await supabase.auth.getSession();
       const userId = session.session?.user?.id;
@@ -116,23 +126,86 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
 
       // Generate unique analysis ID
       const analysisId = `analysis_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      currentAnalysisIdRef.current = analysisId;
+      directResponseRef.current = null;
       
       // Start analysis tracking (this sets up the realtime subscription)
       startAnalysis(selectedImage, analysisId);
 
       // Start the analysis (API will broadcast when done)
-      await analyzePhysique(selectedImage, analysisId, userId);
+      let apiCallCompleted = false;
+      try {
+        const directResponse = await analyzePhysique(selectedImage, analysisId, userId);
+        apiCallCompleted = true;
+        directResponseRef.current = directResponse;
+        
+        // Set a timeout to use direct response if broadcast doesn't arrive
+        // Wait 5 seconds for the broadcast, then use direct response as fallback
+        timeoutRef.current = setTimeout(() => {
+          // Check if we have a direct response and the API call completed
+          // The state check will happen via the context's completeAnalysis function
+          if (
+            directResponseRef.current &&
+            currentAnalysisIdRef.current === analysisId &&
+            apiCallCompleted
+          ) {
+            console.log('Broadcast timeout - using direct API response as fallback');
+            completeAnalysis(directResponseRef.current, selectedImage);
+            // Clean up
+            directResponseRef.current = null;
+            currentAnalysisIdRef.current = null;
+            timeoutRef.current = null;
+          }
+        }, 5000);
+      } catch (apiError: any) {
+        // If API call fails, stop analysis state
+        apiCallCompleted = false;
+        directResponseRef.current = null;
+        currentAnalysisIdRef.current = null;
+        if (timeoutRef.current) {
+          clearTimeout(timeoutRef.current);
+          timeoutRef.current = null;
+        }
+        throw apiError;
+      }
       
       // Note: Navigation will happen via toast notification when analysis completes
-      // The API call might complete synchronously in some cases, but the toast will still show
+      // Either via broadcast (preferred) or direct response fallback after timeout
     } catch (error: any) {
       console.error('Analysis error:', error);
+      // Clean up on error
+      directResponseRef.current = null;
+      currentAnalysisIdRef.current = null;
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+        timeoutRef.current = null;
+      }
       Alert.alert(
         'Analysis Failed',
         error.message || 'Failed to analyze the image. Please try again.'
       );
     }
   };
+
+  // Clear timeout when analysis completes (either via broadcast or timeout)
+  React.useEffect(() => {
+    if (!state.isAnalyzing && timeoutRef.current) {
+      // Analysis completed, clear the timeout
+      clearTimeout(timeoutRef.current);
+      timeoutRef.current = null;
+      directResponseRef.current = null;
+      currentAnalysisIdRef.current = null;
+    }
+  }, [state.isAnalyzing]);
+
+  // Cleanup timeout on unmount
+  React.useEffect(() => {
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
+  }, []);
 
   return (
     <View style={styles.container}>

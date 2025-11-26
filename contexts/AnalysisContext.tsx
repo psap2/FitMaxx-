@@ -159,14 +159,22 @@ export const AnalysisProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       return;
     }
 
-    setState(prev => ({
-      ...prev,
-      isAnalyzing: false,
-      analysisId: null,
-      imageUri: imageUri || prev.imageUri,
-      analysis,
-      showToast: true,
-    }));
+    setState(prev => {
+      // Only update if we're still analyzing (prevents race conditions)
+      if (!prev.isAnalyzing && prev.analysisId === null) {
+        // Analysis was already completed, ignore this call
+        return prev;
+      }
+      
+      return {
+        ...prev,
+        isAnalyzing: false,
+        analysisId: null,
+        imageUri: imageUri || prev.imageUri,
+        analysis,
+        showToast: true,
+      };
+    });
   };
 
   const dismissToast = () => {

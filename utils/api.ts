@@ -86,6 +86,12 @@ export const createPost = async (post: PostInsert) => {
   });
 };
 
+export const deletePost = async (postId: string) => {
+  return apiCall(`/posts/${postId}`, {
+    method: 'DELETE',
+  });
+};
+
 // Comment functions
 export const getComments = async (postId: string) => {
   return apiCall(`/comments?postId=${encodeURIComponent(postId)}`, { method: 'GET' });

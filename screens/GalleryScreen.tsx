@@ -15,7 +15,7 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { supabase } from '../utils/supabase';
 import { RootStackParamList } from '../types';
 import { fonts } from '../theme/fonts';
-import { getUser } from '../utils/api';
+import { getUser, deletePost } from '../utils/api';
 
 type GalleryNavigationProp = NativeStackNavigationProp<RootStackParamList, 'Gallery'>;
 
@@ -110,6 +110,33 @@ const GalleryScreen: React.FC = () => {
     }
   }, []);
 
+  const handleDeletePost = async (postId: string) => {
+    Alert.alert(
+      'Delete Post',
+      'Are you sure you want to delete this progress photo? This action cannot be undone.',
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel',
+        },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await deletePost(postId);
+              // Refresh the posts list
+              await fetchPosts();
+            } catch (error: any) {
+              console.error('Failed to delete post:', error);
+              Alert.alert('Error', error.message || 'Failed to delete post. Please try again.');
+            }
+          },
+        },
+      ]
+    );
+  };
+
   useFocusEffect(
     useCallback(() => {
       fetchPosts();
@@ -164,9 +191,18 @@ const GalleryScreen: React.FC = () => {
           <Text style={styles.fallbackText}>Image unavailable</Text>
         </View>
       )}
-      <Text style={styles.dateText}>
-        {new Date(item.created_at).toLocaleString()}
-      </Text>
+      <View style={styles.dateContainer}>
+        <Text style={styles.dateText}>
+          {new Date(item.created_at).toLocaleString()}
+        </Text>
+        <TouchableOpacity
+          style={styles.deleteButton}
+          onPress={() => handleDeletePost(item.id)}
+          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+        >
+          <Ionicons name="trash-outline" size={16} color="rgba(255, 107, 53, 0.8)" />
+        </TouchableOpacity>
+      </View>
       <View style={styles.overallBadge}>
         <Text style={styles.overallText}>
           {item.overall_rating ? (item.overall_rating / 10).toFixed(1) : '--'}
@@ -298,11 +334,21 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 6,
   },
-  dateText: {
+  dateContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     padding: 12,
+  },
+  dateText: {
+    flex: 1,
     fontSize: 12,
     color: 'rgba(255, 255, 255, 0.8)',
     fontFamily: fonts.regular,
+  },
+  deleteButton: {
+    padding: 4,
+    marginLeft: 8,
   },
   overallBadge: {
     position: 'absolute',
