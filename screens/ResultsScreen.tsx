@@ -39,10 +39,8 @@ export const ResultsScreen: React.FC<ResultsScreenProps> = ({ navigation, route 
   const [isPremiumUser, setIsPremiumUser] = useState(false);
   const [isCreatingReferral, setIsCreatingReferral] = useState(false);
   
-  // Animation values for shiny effect
   const shineAnimation = useRef(new Animated.Value(0)).current;
 
-  // Check if user is premium
   useEffect(() => {
     const checkPremiumStatus = async () => {
       try {
@@ -64,7 +62,6 @@ export const ResultsScreen: React.FC<ResultsScreenProps> = ({ navigation, route 
     checkPremiumStatus();
   }, []);
 
-  // Start shine animation for high scores
   useEffect(() => {
     const startShineAnimation = () => {
       Animated.loop(
@@ -146,7 +143,6 @@ export const ResultsScreen: React.FC<ResultsScreenProps> = ({ navigation, route 
       const toStoredScore = (value: number | undefined | null) =>
         typeof value === 'number' && !isNaN(value) ? Math.round(value) : null;
 
-      // Extract hash from analysis if present (added by API for duplicate detection)
       const imageHash = (analysis as any)._hash || null;
 
       await createPost({
@@ -159,8 +155,7 @@ export const ResultsScreen: React.FC<ResultsScreenProps> = ({ navigation, route 
           : null,
         symmetry: toStoredScore(analysis.symmetry * 10),
         summaryrecc: analysis.summaryRecommendation,
-        hash: imageHash, // Store the image hash for duplicate detection
-        // Save premium scores if they exist
+        hash: imageHash,
         chest: analysis.premiumScores?.chest ? toStoredScore(analysis.premiumScores.chest * 10) : null,
         quads: analysis.premiumScores?.quads ? toStoredScore(analysis.premiumScores.quads * 10) : null,
         hamstrings: analysis.premiumScores?.hamstrings ? toStoredScore(analysis.premiumScores.hamstrings * 10) : null,
@@ -173,7 +168,6 @@ export const ResultsScreen: React.FC<ResultsScreenProps> = ({ navigation, route 
         traps: analysis.premiumScores?.traps ? toStoredScore(analysis.premiumScores.traps * 10) : null,
       });
 
-      // Navigate back to MainApp (scan tab with "Begin Scan" button) after saving
       navigation.navigate('MainApp');
     } catch (error) {
       console.error('Failed to persist analysis result:', error);
@@ -203,7 +197,6 @@ export const ResultsScreen: React.FC<ResultsScreenProps> = ({ navigation, route 
           {
             text: 'Copy Code',
             onPress: () => {
-              // You might want to add clipboard functionality here
               console.log('Referral code:', referral.referral_code);
             }
           },
@@ -227,13 +220,9 @@ export const ResultsScreen: React.FC<ResultsScreenProps> = ({ navigation, route 
     [analysis],
   );
 
-  // Remove premiumMetrics since we're showing scores directly now
-
   const formatScoreValue = (value: number) => Math.round(value).toString();
 
   const progressColor = (value: number) => {
-    // Yellow to red gradient where higher scores are redder
-    // Scores are 0-100, so normalize to 0-1 range
     const normalizedValue = Math.min(Math.max(value / 100, 0), 1);
     
     if (normalizedValue >= 0.8) return '#DC2626'; // Deep red for highest scores (80-100)
@@ -248,7 +237,6 @@ export const ResultsScreen: React.FC<ResultsScreenProps> = ({ navigation, route 
     const baseColor = progressColor(value);
     
     if (value < 70) {
-      // Regular text for scores below 70
       return (
         <Text style={[style, { color: baseColor }]}>
           {formatScoreValue(value)}
@@ -366,7 +354,6 @@ export const ResultsScreen: React.FC<ResultsScreenProps> = ({ navigation, route 
                     .map(([key, value]) => (
                       <View key={key} style={styles.premiumItemWrapper}>
                         {isPremiumUser ? (
-                          // Clear view for premium users
                           <View style={styles.premiumItem}>
                             <Text style={styles.metricLabel}>
                               {key.replace(/_/g, ' ').replace(/\b\w/g, (l) => l.toUpperCase())}
@@ -377,7 +364,6 @@ export const ResultsScreen: React.FC<ResultsScreenProps> = ({ navigation, route 
                             />
                           </View>
                         ) : (
-                          // Blurred individual items for non-premium users
                           <View style={styles.premiumItemBlurWrapper}>
                             <View style={styles.premiumItem}>
                               <Text style={styles.metricLabel}>
@@ -496,7 +482,6 @@ export const ResultsScreen: React.FC<ResultsScreenProps> = ({ navigation, route 
             <TouchableOpacity
               style={styles.actionButton}
               onPress={() => {
-                // Handle share functionality
                 console.log('Share results');
               }}
             >

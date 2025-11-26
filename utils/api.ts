@@ -2,26 +2,22 @@ import { Platform } from 'react-native';
 import { supabase } from './supabase';
 import { User, Post, Comment, Referral } from '../server/lib/db/schema';
 
-// Get API base URL
 const getApiUrl = () => {
   if (__DEV__) {
-    // Development URLs - different for Android and iOS
     if (Platform.OS === 'android') {
-      return 'http://10.0.2.2:3000'; // Android emulator localhost
+      return 'http://10.0.2.2:3000';
     } else if (Platform.OS === 'ios') {
-      return 'http://localhost:3000'; // iOS simulator localhost
+      return 'http://localhost:3000';
     } else {
-      return 'http://localhost:3000'; // Fallback for web/other
+      return 'http://localhost:3000';
     }
   } else {
-    // Production URL
     return process.env.EXPO_PUBLIC_API_URL || 'https://your-production-url.com';
   }
 };
 
 const API_URL = getApiUrl();
 
-// Helper function to make API calls with auth
 export async function apiCall(endpoint: string, options: RequestInit = {}) {
   const { data: session } = await supabase.auth.getSession();
   const token = session.session?.access_token;
@@ -48,7 +44,6 @@ export async function apiCall(endpoint: string, options: RequestInit = {}) {
   return response.json();
 }
 
-// User functions
 export const getUser = async (email: string | undefined) => {
   if (!email) {
     throw new Error('Email is required');
@@ -76,7 +71,6 @@ export const deleteUser = async (userId: string) => {
   });
 };
 
-// Post functions
 type PostInsert = Omit<Post, 'id' | 'created_at'>;
 
 export const createPost = async (post: PostInsert) => {
@@ -92,7 +86,6 @@ export const deletePost = async (postId: string) => {
   });
 };
 
-// Comment functions
 export const getComments = async (postId: string) => {
   return apiCall(`/comments?postId=${encodeURIComponent(postId)}`, { method: 'GET' });
 };
@@ -112,7 +105,6 @@ export const deleteComment = async (commentId: string) => {
   });
 };
 
-// Referral functions
 export const getOrCreateReferral = async (userId: string) => {
   return apiCall('/referrals', {
     method: 'POST',
@@ -120,7 +112,6 @@ export const getOrCreateReferral = async (userId: string) => {
   });
 };
 
-// Keep the old function for backward compatibility
 export const createReferral = getOrCreateReferral;
 
 export const validateReferralCode = async (referralCode: string) => {
@@ -134,14 +125,12 @@ export const applyReferralAfterSignup = async (referralCode: string, referredUse
   });
 };
 
-// Keep the old function for backward compatibility
 export const useReferralCode = applyReferralAfterSignup;
 
 export const getUserReferrals = async (userId: string) => {
-  return apiCall(`/referrals?userId=${encodeURIComponent(userId)}`, { method: 'GET' });
+  return apiCall(`/referrals?userId=${encodeURIComponent(userId)}`, { method: 'GET'   });
 };
 
-// Goal functions
 export const getGoals = async (userId: string) => {
   return apiCall(`/goals?userId=${encodeURIComponent(userId)}`, { method: 'GET' });
 };

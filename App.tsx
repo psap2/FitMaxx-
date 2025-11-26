@@ -34,7 +34,6 @@ function AppContent() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [currentRoute, setCurrentRoute] = useState<string | undefined>(undefined);
 
-  // Track current navigation route
   useEffect(() => {
     if (navigationRef.isReady()) {
       const currentRouteName = navigationRef.getCurrentRoute()?.name;
@@ -42,7 +41,6 @@ function AppContent() {
     }
   }, [navigationRef.isReady()]);
 
-  // Listen to navigation state changes
   const handleNavigationStateChange = useCallback(() => {
     if (navigationRef.isReady()) {
       const currentRouteName = navigationRef.getCurrentRoute()?.name;
@@ -50,7 +48,6 @@ function AppContent() {
     }
   }, []);
 
-  // Check authentication status
   useEffect(() => {
     const checkAuth = async () => {
       const { data: session } = await supabase.auth.getSession();
@@ -59,12 +56,10 @@ function AppContent() {
 
     checkAuth();
 
-    // Listen for auth changes
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((event, session) => {
       setIsAuthenticated(!!session?.user?.id);
-      // If user logged out, dismiss any visible toast
       if (!session?.user?.id && state.showToast) {
         dismissToast();
       }
@@ -75,10 +70,8 @@ function AppContent() {
     };
   }, [state.showToast, dismissToast]);
 
-  // Auto-navigate to Results if on Home screen when analysis completes
   useEffect(() => {
     if (state.showToast && state.analysis && state.imageUri && navigationRef.isReady() && currentRoute === 'Home') {
-      // If on Home screen, automatically navigate to Results
       navigationRef.navigate('Results', {
         analysis: state.analysis,
         imageUri: state.imageUri,
@@ -173,7 +166,6 @@ function AppContent() {
         </Stack.Navigator>
       </NavigationContainer>
       
-      {/* Only show toast if user is authenticated and NOT on Home screen (auto-navigate on Home) */}
       {isAuthenticated && currentRoute !== 'Home' && (
         <AnalysisToast
           visible={state.showToast}

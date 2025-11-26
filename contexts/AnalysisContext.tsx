@@ -30,20 +30,16 @@ export const AnalysisProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   });
   const channelRef = useRef<any>(null);
 
-  // Listen for auth state changes (logout, account deletion, etc.)
   useEffect(() => {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
-      // If user logged out, signed out, or token was revoked
       if (event === 'SIGNED_OUT' || event === 'TOKEN_REFRESHED' && !session) {
-        // Clean up state and subscriptions
         if (channelRef.current) {
           supabase.removeChannel(channelRef.current);
           channelRef.current = null;
         }
         
-        // Reset state
         setState({
           isAnalyzing: false,
           analysisId: null,
@@ -60,13 +56,11 @@ export const AnalysisProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   }, []);
 
   useEffect(() => {
-    // Set up global realtime subscription
     const setupRealtimeSubscription = async () => {
       const { data: session } = await supabase.auth.getSession();
       const userId = session.session?.user?.id;
 
       if (!userId) {
-        // If not authenticated, clean up any existing subscription
         if (channelRef.current) {
           supabase.removeChannel(channelRef.current);
           channelRef.current = null;
@@ -74,28 +68,22 @@ export const AnalysisProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         return;
       }
 
-      // Clean up existing subscription
       if (channelRef.current) {
         supabase.removeChannel(channelRef.current);
       }
 
-      // Subscribe to analysis completion broadcasts
       const channel = supabase.channel(`analysis:${userId}`)
         .on('broadcast', { event: 'analysis-complete' }, async (payload) => {
-          // Verify user is still authenticated before processing
           const { data: currentSession } = await supabase.auth.getSession();
           if (!currentSession.session?.user?.id) {
-            // User is no longer authenticated, ignore this broadcast
             return;
           }
 
           const { analysisId, status, analysis, error } = payload.payload;
 
           if (status === 'completed' && analysis) {
-            // Double-check authentication before showing toast
             const { data: verifySession } = await supabase.auth.getSession();
             if (!verifySession.session?.user?.id) {
-              // User logged out, don't show toast
               setState(prev => ({
                 ...prev,
                 isAnalyzing: false,
@@ -104,7 +92,6 @@ export const AnalysisProvider: React.FC<{ children: React.ReactNode }> = ({ chil
               return;
             }
 
-            // Get stored image URI for this analysis
             const storedData = await AsyncStorage.getItem(`analysis:${analysisId}`);
             const { imageUri } = storedData ? JSON.parse(storedData) : { imageUri: null };
 
@@ -115,7 +102,6 @@ export const AnalysisProvider: React.FC<{ children: React.ReactNode }> = ({ chil
               isAnalyzing: false,
               showToast: false,
             }));
-            // You could show an error toast here if needed
           }
         })
         .subscribe();
@@ -133,7 +119,6 @@ export const AnalysisProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   }, []);
 
   const startAnalysis = (imageUri: string, analysisId: string) => {
-    // Store image URI for later retrieval
     AsyncStorage.setItem(`analysis:${analysisId}`, JSON.stringify({ imageUri }));
     
     setState({
@@ -146,10 +131,8 @@ export const AnalysisProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   };
 
   const completeAnalysis = async (analysis: PhysiqueAnalysis, imageUri: string | null) => {
-    // Verify user is still authenticated before showing toast
     const { data: session } = await supabase.auth.getSession();
     if (!session.session?.user?.id) {
-      // User is not authenticated, don't show toast
       setState(prev => ({
         ...prev,
         isAnalyzing: false,
@@ -160,9 +143,7 @@ export const AnalysisProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }
 
     setState(prev => {
-      // Only update if we're still analyzing (prevents race conditions)
       if (!prev.isAnalyzing && prev.analysisId === null) {
-        // Analysis was already completed, ignore this call
         return prev;
       }
       

@@ -43,14 +43,12 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ navigation, route }) => 
       await GoogleSignin.hasPlayServices();
       const response = await GoogleSignin.signIn();
 
-      // Google Sign-In gives you an ID token
       const idToken = response?.data?.idToken;
       if (!idToken) {
         Alert.alert('Error', 'No ID token returned from Google Sign-In');
         return;
       }
 
-      // Sign in with Supabase using the Google ID token
       const { data, error } = await supabase.auth.signInWithIdToken({
         provider: 'google',
         token: idToken,
@@ -62,7 +60,6 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ navigation, route }) => 
       } else {
         console.log('Supabase user data:', data);
         
-        // Extract route params for gender, height, and weight
         const routeParams = route.params;
         const hasOnboardingData = routeParams?.gender && routeParams?.height && routeParams?.weight;
         

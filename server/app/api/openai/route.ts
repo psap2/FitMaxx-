@@ -6,7 +6,6 @@ import { createHash } from "crypto";
 import { supabaseAdmin } from "../../../lib/db/supabase";
 import { createClient } from '@supabase/supabase-js';
 
-// Create a Supabase client for broadcasting (using publishable key)
 const supabaseRealtime = createClient(
   process.env.SUPABASE_URL!,
   process.env.SUPABASE_PUBLISHABLE_KEY!,
@@ -18,8 +17,7 @@ const supabaseRealtime = createClient(
   }
 );
 
-// Increase timeout for long-running OpenAI Vision API calls
-export const maxDuration = 120; // 2 minutes
+export const maxDuration = 120;
 
 export const openai = new AzureOpenAI({
   baseURL: "https://azureaiapi.cloud.unc.edu/openai",
@@ -86,16 +84,13 @@ NOTES FOR PREMIUM USERS:
 
 6. **No disclaimers** beyond what is necessary in the JSON. No commentary outside the JSON.`;
 
-// Helper function to generate hash from image data
 async function generateImageHash(imageBase64: string | null, imageUrl: string | null): Promise<string> {
   let imageBuffer: Buffer;
   
   if (imageBase64) {
-    // Remove data URL prefix if present
     const base64Data = imageBase64.includes(',') ? imageBase64.split(',')[1] : imageBase64;
     imageBuffer = Buffer.from(base64Data, 'base64');
   } else if (imageUrl) {
-    // Fetch image from URL and convert to buffer
     const response = await fetch(imageUrl);
     const arrayBuffer = await response.arrayBuffer();
     imageBuffer = Buffer.from(arrayBuffer);
@@ -103,11 +98,9 @@ async function generateImageHash(imageBase64: string | null, imageUrl: string | 
     throw new Error('No image data provided');
   }
 
-  // Generate SHA-256 hash
   return createHash('sha256').update(imageBuffer).digest('hex');
 }
 
-// Helper function to convert Post to PhysiqueAnalysis format
 function postToAnalysis(post: any): any {
   return {
     overallRating: post.overall_rating !== null ? post.overall_rating / 10 : null,
@@ -149,10 +142,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Generate hash from image
     const imageHash = await generateImageHash(imageBase64 || null, imageUrl || null);
 
-    // Check if a post with this hash already exists (use admin client to bypass RLS)
     let existingPost = null;
     if (supabaseAdmin) {
       const { data: existingPosts, error: queryError } = await supabaseAdmin
@@ -168,20 +159,14 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Note: We'll still call GPT even if we have stored scores, to get fresh strengths/improvements
-
-    // Read body fat comparison image and convert to base64
-    // The assets folder is at the root level, one directory up from server
     let bodyFatImageBase64: string | null = null;
     try {
       const imagePath = join(process.cwd(), '..', 'assets', 'bodyfat.png');
       const imageBuffer = readFileSync(imagePath);
       bodyFatImageBase64 = imageBuffer.toString('base64');
     } catch (error) {
-      // Continue without image if it fails to load
     }
 
-    // Prepare image content for vision API
     const imageContent: any = imageBase64
       ? {
           type: "image_url",
@@ -198,7 +183,6 @@ export async function POST(request: NextRequest) {
 
     const startTime = Date.now();
     
-    // Build messages array with body fat reference image
     const messages: Array<{
       role: "system" | "user" | "assistant";
       content: string | Array<{ type: "text" | "image_url"; text?: string; image_url?: { url: string } }>;
@@ -209,7 +193,6 @@ export async function POST(request: NextRequest) {
       },
     ];
 
-    // Add body fat reference image as a user message if available
     if (bodyFatImageBase64) {
       messages.push({
         role: "user",
@@ -228,7 +211,6 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // Add the actual analysis request with user's photo
     messages.push({
       role: "user",
       content: [
@@ -242,14 +224,13 @@ export async function POST(request: NextRequest) {
     
     const response = await openai.chat.completions.create({
       model: "gpt-4o-mini",
-      messages: messages as any, // Type assertion needed due to Azure OpenAI SDK type definitions
+      messages: messages as any,
       response_format: { type: "json_object" },
       max_tokens: 2000,
     });
     
     const content = response.choices[0]?.message?.content;
     if (!content) {
-      // Broadcast error if analysisId provided
       if (analysisId && userId) {
         await supabaseRealtime.channel(`analysis:${userId}`).send({
           type: 'broadcast',
@@ -267,12 +248,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Parse the JSON response
     let analysis;
     try {
       analysis = JSON.parse(content);
     } catch (parseError) {
-      // Broadcast error if analysisId provided
       if (analysisId && userId) {
         await supabaseRealtime.channel(`analysis:${userId}`).send({
           type: 'broadcast',
@@ -290,17 +269,15 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // If we have stored scores, use them instead of GPT scores (but keep GPT strengths/improvements)
     if (existingPost) {
       const storedAnalysis = postToAnalysis(existingPost);
       const finalAnalysis = {
-        ...storedAnalysis, // Use stored scores (ratings, premium scores, etc.)
-        strengths: analysis.strengths || [], // Use fresh GPT strengths
-        improvements: analysis.improvements || [], // Use fresh GPT improvements
-        _hash: imageHash, // Include hash in response so client can store it
+        ...storedAnalysis,
+        strengths: analysis.strengths || [],
+        improvements: analysis.improvements || [],
+        _hash: imageHash,
       };
 
-      // Broadcast completion if analysisId provided
       if (analysisId && userId) {
         await supabaseRealtime.channel(`analysis:${userId}`).send({
           type: 'broadcast',
@@ -316,13 +293,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(finalAnalysis);
     }
     
-    // Return analysis with hash so client can store it
     const finalAnalysis = {
       ...analysis,
-      _hash: imageHash, // Include hash in response so client can store it
+      _hash: imageHash,
     };
 
-    // Broadcast completion if analysisId provided
     if (analysisId && userId) {
       await supabaseRealtime.channel(`analysis:${userId}`).send({
         type: 'broadcast',
@@ -336,8 +311,7 @@ export async function POST(request: NextRequest) {
     }
 
     return NextResponse.json(finalAnalysis);
-  } catch (error: any) {
-    // Provide specific error messages for common issues
+    } catch (error: any) {
     let errorMessage = "Failed to analyze image";
     if (error.message?.includes('timeout')) {
       errorMessage = "OpenAI API request timed out. Please try again.";
@@ -349,7 +323,6 @@ export async function POST(request: NextRequest) {
       errorMessage = error.message;
     }
 
-    // Broadcast error if analysisId provided
     if (analysisId && userId) {
       try {
         await supabaseRealtime.channel(`analysis:${userId}`).send({
@@ -373,7 +346,6 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// This is for testing
 export async function GET() {
   try {
     const response = await openai.chat.completions.create({
