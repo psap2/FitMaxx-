@@ -1,7 +1,7 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { Text } from 'react-native';
-import { NavigationContainer } from '@react-navigation/native';
+import { NavigationContainer, useNavigationContainerRef } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import {
   useFonts,
@@ -22,8 +22,168 @@ import GalleryScreen from './screens/GalleryScreen';
 import { CommentsScreen } from './screens/CommentsScreen';
 import { GoalsScreen } from './screens/GoalsScreen';
 import { RootStackParamList } from './types';
+import { AnalysisProvider, useAnalysis } from './contexts/AnalysisContext';
+import { AnalysisToast } from './components/AnalysisToast';
+import { supabase } from './utils/supabase';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
+
+function AppContent() {
+  const { state, dismissToast } = useAnalysis();
+  const navigationRef = useNavigationContainerRef<any>();
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [currentRoute, setCurrentRoute] = useState<string | undefined>(undefined);
+
+  // Track current navigation route
+  useEffect(() => {
+    if (navigationRef.isReady()) {
+      const currentRouteName = navigationRef.getCurrentRoute()?.name;
+      setCurrentRoute(currentRouteName);
+    }
+  }, [navigationRef.isReady()]);
+
+  // Listen to navigation state changes
+  const handleNavigationStateChange = useCallback(() => {
+    if (navigationRef.isReady()) {
+      const currentRouteName = navigationRef.getCurrentRoute()?.name;
+      setCurrentRoute(currentRouteName);
+    }
+  }, []);
+
+  // Check authentication status
+  useEffect(() => {
+    const checkAuth = async () => {
+      const { data: session } = await supabase.auth.getSession();
+      setIsAuthenticated(!!session.session?.user?.id);
+    };
+
+    checkAuth();
+
+    // Listen for auth changes
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      setIsAuthenticated(!!session?.user?.id);
+      // If user logged out, dismiss any visible toast
+      if (!session?.user?.id && state.showToast) {
+        dismissToast();
+      }
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [state.showToast, dismissToast]);
+
+  // Auto-navigate to Results if on Home screen when analysis completes
+  useEffect(() => {
+    if (state.showToast && state.analysis && state.imageUri && navigationRef.isReady() && currentRoute === 'Home') {
+      // If on Home screen, automatically navigate to Results
+      navigationRef.navigate('Results', {
+        analysis: state.analysis,
+        imageUri: state.imageUri,
+        allowSave: true,
+      });
+      dismissToast();
+    }
+  }, [state.showToast, state.analysis, state.imageUri, currentRoute, dismissToast]);
+
+  const handleViewResults = () => {
+    if (state.analysis && state.imageUri && navigationRef.isReady()) {
+      navigationRef.navigate('Results', {
+        analysis: state.analysis,
+        imageUri: state.imageUri,
+        allowSave: true,
+      });
+      dismissToast();
+    }
+  };
+
+  return (
+    <>
+      <NavigationContainer 
+        ref={navigationRef}
+        onReady={handleNavigationStateChange}
+        onStateChange={handleNavigationStateChange}
+      >
+        <StatusBar style="light" />
+        <Stack.Navigator
+          initialRouteName="Gender"
+          screenOptions={{
+            headerShown: false,
+            animation: 'slide_from_right',
+            animationDuration: 300,
+          }}
+        >
+          <Stack.Screen 
+            name="Gender" 
+            component={GenderScreen}
+            options={{
+              animation: 'slide_from_right',
+              animationDuration: 300,
+            }}
+          />
+          <Stack.Screen 
+            name="Height" 
+            component={HeightScreen}
+            options={{
+              animation: 'slide_from_right',
+              animationDuration: 300,
+            }}
+          />
+          <Stack.Screen 
+            name="Weight" 
+            component={WeightScreen}
+            options={{
+              animation: 'slide_from_right',
+              animationDuration: 300,
+            }}
+          />
+          <Stack.Screen 
+            name="Referral" 
+            component={ReferralScreen}
+            options={{
+              animation: 'slide_from_right',
+              animationDuration: 300,
+            }}
+          />
+          <Stack.Screen 
+            name="Notifications" 
+            component={NotificationsScreen}
+            options={{
+              animation: 'slide_from_right',
+              animationDuration: 300,
+            }}
+          />
+          <Stack.Screen name="Auth" component={AuthScreen} />
+          <Stack.Screen 
+            name="MainApp" 
+            component={MainAppScreen}
+            options={{
+              gestureEnabled: false,
+              headerShown: false,
+            }}
+          />
+          <Stack.Screen name="Home" component={HomeScreen} />
+          <Stack.Screen name="Results" component={ResultsScreen} />
+          <Stack.Screen name="Gallery" component={GalleryScreen} />
+          <Stack.Screen name="EditProfile" component={EditProfileScreen} />
+          <Stack.Screen name="Comments" component={CommentsScreen} />
+          <Stack.Screen name="Goals" component={GoalsScreen} />
+        </Stack.Navigator>
+      </NavigationContainer>
+      
+      {/* Only show toast if user is authenticated and NOT on Home screen (auto-navigate on Home) */}
+      {isAuthenticated && currentRoute !== 'Home' && (
+        <AnalysisToast
+          visible={state.showToast}
+          onViewResults={handleViewResults}
+          onDismiss={dismissToast}
+        />
+      )}
+    </>
+  );
+}
 
 export default function App() {
   const [fontsLoaded] = useFonts({
@@ -51,36 +211,8 @@ export default function App() {
   }
 
   return (
-    <NavigationContainer>
-      <StatusBar style="light" />
-      <Stack.Navigator
-        initialRouteName="Gender"
-        screenOptions={{
-          headerShown: false,
-          animation: 'slide_from_right',
-        }}
-      >
-        <Stack.Screen name="Gender" component={GenderScreen} />
-        <Stack.Screen name="Height" component={HeightScreen} />
-        <Stack.Screen name="Weight" component={WeightScreen} />
-        <Stack.Screen name="Referral" component={ReferralScreen} />
-        <Stack.Screen name="Notifications" component={NotificationsScreen} />
-        <Stack.Screen name="Auth" component={AuthScreen} />
-        <Stack.Screen 
-          name="MainApp" 
-          component={MainAppScreen}
-          options={{
-            gestureEnabled: false,
-            headerShown: false,
-          }}
-        />
-        <Stack.Screen name="Home" component={HomeScreen} />
-        <Stack.Screen name="Results" component={ResultsScreen} />
-        <Stack.Screen name="Gallery" component={GalleryScreen} />
-        <Stack.Screen name="EditProfile" component={EditProfileScreen} />
-        <Stack.Screen name="Comments" component={CommentsScreen} />
-        <Stack.Screen name="Goals" component={GoalsScreen} />
-      </Stack.Navigator>
-    </NavigationContainer>
+    <AnalysisProvider>
+      <AppContent />
+    </AnalysisProvider>
   );
 }

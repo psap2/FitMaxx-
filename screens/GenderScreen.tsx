@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { ProgressBar } from '../components/ProgressBar';
@@ -58,9 +57,23 @@ export const GenderScreen: React.FC<GenderScreenProps> = ({ navigation }) => {
     }
   };
 
+  const handleBack = () => {
+    if (navigation.canGoBack()) {
+      navigation.goBack();
+    }
+  };
+
   return (
-    <LinearGradient colors={['#000000', '#000000', '#000000']} style={styles.container}>
+    <View style={styles.container}>
       <ProgressBar currentStep={1} totalSteps={6} />
+      
+      {navigation.canGoBack() && (
+        <TouchableOpacity style={styles.backButton} onPress={handleBack}>
+          <View style={styles.backButtonCircle}>
+            <Ionicons name="arrow-back" size={20} color="#FF6B35" />
+          </View>
+        </TouchableOpacity>
+      )}
       
       <View style={styles.content}>
         <Text style={styles.title}>What's your gender?</Text>
@@ -102,21 +115,17 @@ export const GenderScreen: React.FC<GenderScreenProps> = ({ navigation }) => {
         onPress={handleContinue}
         disabled={!selectedGender}
       >
-        <LinearGradient
-          colors={selectedGender ? ['#FF6B35', '#FF8C42'] : ['#666', '#888']}
-          style={styles.continueGradient}
-        >
-          <Text style={styles.continueText}>Continue</Text>
-          <Ionicons name="arrow-forward" size={24} color="#fff" />
-        </LinearGradient>
+        <Text style={styles.continueText}>Continue</Text>
+        <Ionicons name="arrow-forward" size={20} color="#fff" />
       </TouchableOpacity>
-    </LinearGradient>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: '#000000',
   },
   content: {
     flex: 1,
@@ -124,15 +133,17 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   title: {
-    fontSize: 32,
-    fontFamily: fonts.bold,
+    fontSize: 28,
+    fontFamily: fonts.regular,
     color: '#fff',
     textAlign: 'center',
-    marginBottom: 12,
+    marginBottom: 8,
+    letterSpacing: 0.5,
   },
   subtitle: {
-    fontSize: 16,
-    color: 'rgba(255, 255, 255, 0.7)',
+    fontSize: 15,
+    fontFamily: fonts.regular,
+    color: 'rgba(255, 255, 255, 0.6)',
     textAlign: 'center',
     marginBottom: 60,
   },
@@ -143,22 +154,22 @@ const styles = StyleSheet.create({
   },
   option: {
     flex: 1,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    borderRadius: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    borderRadius: 16,
     padding: 40,
     alignItems: 'center',
-    borderWidth: 2,
-    borderColor: 'transparent',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
   },
   optionSelected: {
-    borderColor: '#4facfe',
-    backgroundColor: 'rgba(79, 172, 254, 0.1)',
+    borderColor: '#FF6B35',
+    backgroundColor: 'rgba(255, 107, 53, 0.1)',
   },
   optionText: {
-    fontSize: 20,
+    fontSize: 18,
+    fontFamily: fonts.regular,
     color: 'rgba(255, 255, 255, 0.6)',
     marginTop: 16,
-    fontFamily: fonts.bold,
   },
   optionTextSelected: {
     color: '#fff',
@@ -166,22 +177,46 @@ const styles = StyleSheet.create({
   continueButton: {
     marginHorizontal: 20,
     marginBottom: 64,
-    borderRadius: 16,
-    overflow: 'hidden',
-  },
-  continueButtonDisabled: {
-    opacity: 0.5,
-  },
-  continueGradient: {
+    borderRadius: 12,
+    backgroundColor: '#FF6B35',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 18,
-    gap: 12,
+    paddingVertical: 16,
+    gap: 10,
+  },
+  continueButtonDisabled: {
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    opacity: 0.5,
   },
   continueText: {
     color: '#fff',
-    fontSize: 18,
-    fontFamily: fonts.bold,
+    fontSize: 16,
+    fontFamily: fonts.regular,
+    letterSpacing: 0.3,
+  },
+  backButton: {
+    position: 'absolute',
+    top: 90,
+    left: 20,
+    zIndex: 10,
+    width: 48,
+    height: 40,
+    backgroundColor: '#000000',
+    borderRadius: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  backButtonCircle: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: 'transparent',
+    borderWidth: 1.5,
+    borderColor: '#FF6B35',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });

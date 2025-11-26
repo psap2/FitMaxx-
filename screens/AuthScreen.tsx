@@ -174,10 +174,8 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ navigation, route }) => 
           
           // Apply referral code if provided
           if (routeParams.referralCode) {
-            console.log('🎯 Found referral code in params:', routeParams.referralCode);
             try {
               const result = await applyReferralAfterSignup(routeParams.referralCode, data.user.id);
-              console.log('✅ Referral applied successfully:', result);
               Alert.alert(
                 'Welcome!',
                 'Your account has been created successfully!',
@@ -185,7 +183,6 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ navigation, route }) => 
               );
               return;
             } catch (referralError: any) {
-              console.error('❌ Error applying referral:', referralError);
               // Continue to main app even if referral fails
               Alert.alert(
                 'Account Created',
@@ -194,8 +191,6 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ navigation, route }) => 
               );
               return;
             }
-          } else {
-            console.log('ℹ️ No referral code found in params');
           }
         } catch (createError: any) {
           console.error('Error creating user:', createError);
@@ -218,7 +213,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ navigation, route }) => 
   };
 
   return (
-    <LinearGradient colors={['#000000', '#000000', '#000000']} style={styles.container}>
+    <View style={styles.container}>
       <ProgressBar currentStep={6} totalSteps={6} />
       
       <View style={styles.content}>
@@ -232,7 +227,6 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ navigation, route }) => 
           <Text style={styles.title}>Create your account</Text>
           <Text style={styles.subtitle}>Choose your preferred sign-in method</Text>
 
-          {/* ✅ Updated Google button */}
           <TouchableOpacity style={styles.authButton} onPress={handleGoogleSignIn}>
             <View style={styles.googleButton}>
               <Ionicons name="logo-google" size={24} color="#fff" />
@@ -247,13 +241,14 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ navigation, route }) => 
           </Text>
         </View>
       </View>
-    </LinearGradient>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: '#000000',
   },
   content: {
     flex: 1,
@@ -266,23 +261,24 @@ const styles = StyleSheet.create({
     marginTop: 40,
   },
   logo: {
-    fontSize: 56,
-    fontFamily: fonts.bold,
+    fontSize: 36,
+    fontFamily: fonts.regular,
     color: '#fff',
-    letterSpacing: 2,
+    letterSpacing: 0.5,
   },
   logoImage: {
-    width: 160,
-    height: 160,
+    width: 140,
+    height: 140,
     marginTop: 0,
     backgroundColor: 'transparent',
   },
   tagline: {
-    fontSize: 18,
-    color: 'rgba(255, 255, 255, 0.7)',
+    fontSize: 15,
+    fontFamily: fonts.regular,
+    color: 'rgba(255, 255, 255, 0.6)',
     marginTop: 8,
     marginBottom: 24,
-    letterSpacing: 1,
+    letterSpacing: 0.3,
   },
   authContainer: {
     marginTop: 40,
@@ -290,39 +286,41 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 28,
-    fontFamily: fonts.bold,
+    fontFamily: fonts.regular,
     color: '#fff',
     textAlign: 'center',
     marginTop: 24,
     marginBottom: 8,
   },
   subtitle: {
-    fontSize: 16,
-    color: 'rgba(255, 255, 255, 0.7)',
+    fontSize: 15,
+    fontFamily: fonts.regular,
+    color: 'rgba(255, 255, 255, 0.6)',
     textAlign: 'center',
     marginBottom: 16,
   },
   authButton: {
     marginBottom: 16,
-    borderRadius: 16,
-    overflow: 'hidden',
+    borderRadius: 12,
   },
   googleButton: {
     backgroundColor: '#FF6B35',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 18,
-    gap: 12,
+    paddingVertical: 16,
+    gap: 10,
+    borderRadius: 12,
   },
   authButtonText: {
     color: '#fff',
-    fontSize: 18,
-    fontFamily: fonts.bold,
+    fontSize: 16,
+    fontFamily: fonts.regular,
   },
   terms: {
-    fontSize: 14,
-    color: 'rgba(255, 255, 255, 0.5)',
+    fontSize: 13,
+    fontFamily: fonts.regular,
+    color: 'rgba(255, 255, 255, 0.6)',
     textAlign: 'center',
     marginTop: 30,
     lineHeight: 20,

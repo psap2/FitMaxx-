@@ -173,7 +173,7 @@ export const GoalsScreen: React.FC<GoalsScreenProps> = ({ navigation }) => {
   }
 
   return (
-    <LinearGradient colors={['#0B0B0F', '#0B0B0F']} style={styles.container}>
+    <View style={styles.container}>
       <View style={styles.header}>
         <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
           <Ionicons name="arrow-back" size={24} color="#fff" />
@@ -234,17 +234,15 @@ export const GoalsScreen: React.FC<GoalsScreenProps> = ({ navigation }) => {
             )}
             
             <TouchableOpacity
-              style={styles.saveButton}
+              style={[styles.saveButton, saving && styles.saveButtonDisabled]}
               onPress={handleAddGoal}
               disabled={saving}
             >
-              <LinearGradient colors={['#FF6B35', '#FF8C42']} style={styles.saveGradient}>
-                {saving ? (
-                  <ActivityIndicator size="small" color="#fff" />
-                ) : (
-                  <Text style={styles.saveButtonText}>Add Goal</Text>
-                )}
-              </LinearGradient>
+              {saving ? (
+                <ActivityIndicator size="small" color="#fff" />
+              ) : (
+                <Text style={styles.saveButtonText}>Add Goal</Text>
+              )}
             </TouchableOpacity>
           </View>
         )}
@@ -334,19 +332,20 @@ export const GoalsScreen: React.FC<GoalsScreenProps> = ({ navigation }) => {
           </View>
         )}
       </ScrollView>
-    </LinearGradient>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: '#000000',
   },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#0B0B0F',
+    backgroundColor: '#000000',
   },
   loadingText: {
     color: '#fff',
@@ -367,7 +366,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 24,
-    fontFamily: fonts.bold,
+    fontFamily: fonts.regular,
     color: '#fff',
   },
   addButton: {
@@ -387,7 +386,7 @@ const styles = StyleSheet.create({
   },
   formTitle: {
     fontSize: 18,
-    fontFamily: fonts.bold,
+    fontFamily: fonts.regular,
     color: '#fff',
     marginBottom: 16,
   },
@@ -437,17 +436,18 @@ const styles = StyleSheet.create({
   },
   saveButton: {
     borderRadius: 12,
-    overflow: 'hidden',
-    marginTop: 8,
-  },
-  saveGradient: {
+    backgroundColor: '#FF6B35',
     paddingVertical: 14,
     alignItems: 'center',
+    marginTop: 8,
+  },
+  saveButtonDisabled: {
+    backgroundColor: 'rgba(255, 107, 53, 0.5)',
   },
   saveButtonText: {
     color: '#fff',
-    fontSize: 16,
-    fontFamily: fonts.bold,
+    fontSize: 15,
+    fontFamily: fonts.regular,
   },
   emptyContainer: {
     flex: 1,
@@ -457,7 +457,7 @@ const styles = StyleSheet.create({
   },
   emptyTitle: {
     fontSize: 22,
-    fontFamily: fonts.bold,
+    fontFamily: fonts.regular,
     color: '#fff',
     marginTop: 20,
     marginBottom: 8,
@@ -540,7 +540,7 @@ const styles = StyleSheet.create({
   overdueLabel: {
     fontSize: 12,
     color: '#EF4444',
-    fontFamily: fonts.bold,
+    fontFamily: fonts.regular,
   },
   deleteButton: {
     padding: 8,

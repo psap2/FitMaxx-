@@ -18,6 +18,8 @@ import ExtrasScreen from './ExtrasScreen';
 import CoachScreen from './CoachScreen';
 import { fonts } from '../theme/fonts';
 import { supabase } from '../utils/supabase';
+import { getUser, deleteUser } from '../utils/api';
+import { Alert } from 'react-native';
 
 type MainAppScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'MainApp'>;
 
@@ -31,6 +33,8 @@ export const MainAppScreen: React.FC<MainAppScreenProps> = ({ navigation }) => {
   const [activeTab, setActiveTab] = useState<'scan' | 'extras' | 'coach'>('scan');
   const [settingsVisible, setSettingsVisible] = useState(false);
   const [userEmail, setUserEmail] = useState<string | undefined>(undefined);
+  const [isPremiumUser, setIsPremiumUser] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const insets = useSafeAreaInsets();
 
   const renderContent = () => {
@@ -49,7 +53,20 @@ export const MainAppScreen: React.FC<MainAppScreenProps> = ({ navigation }) => {
   useEffect(() => {
     const fetchSession = async () => {
       const { data } = await supabase.auth.getSession();
-      setUserEmail(data.session?.user?.email);
+      const email = data.session?.user?.email;
+      setUserEmail(email);
+
+      // Check premium status
+      if (email) {
+        try {
+          const userData = await getUser(email);
+          if (userData && userData.length > 0) {
+            setIsPremiumUser(userData[0].premium || false);
+          }
+        } catch (error) {
+          console.error('Error checking premium status:', error);
+        }
+      }
     };
 
     fetchSession();
@@ -57,7 +74,21 @@ export const MainAppScreen: React.FC<MainAppScreenProps> = ({ navigation }) => {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUserEmail(session?.user?.email);
+      const email = session?.user?.email;
+      setUserEmail(email);
+      
+      // Check premium status on auth change
+      if (email) {
+        getUser(email).then(userData => {
+          if (userData && userData.length > 0) {
+            setIsPremiumUser(userData[0].premium || false);
+          }
+        }).catch(error => {
+          console.error('Error checking premium status:', error);
+        });
+      } else {
+        setIsPremiumUser(false);
+      }
     });
 
     return () => {
@@ -79,12 +110,59 @@ export const MainAppScreen: React.FC<MainAppScreenProps> = ({ navigation }) => {
     }
   };
 
+  const handleDeleteAccount = () => {
+    Alert.alert(
+      'Delete Account',
+      'Are you sure you want to delete your account? This action cannot be undone and will permanently delete all your data including posts, goals, and progress photos.',
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel',
+        },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            setIsDeleting(true);
+            try {
+              const { data: session } = await supabase.auth.getSession();
+              const userId = session.session?.user?.id;
+
+              if (!userId) {
+                Alert.alert('Error', 'You must be signed in to delete your account.');
+                setIsDeleting(false);
+                return;
+              }
+
+              // Delete user data and auth user (handled server-side)
+              await deleteUser(userId);
+
+              // Sign out and navigate to auth
+              await supabase.auth.signOut();
+              
+              setSettingsVisible(false);
+              navigation.reset({
+                index: 0,
+                routes: [{ name: 'Auth' }],
+              });
+            } catch (error: any) {
+              console.error('Error deleting account:', error);
+              Alert.alert(
+                'Error',
+                error.message || 'Failed to delete account. Please try again.'
+              );
+            } finally {
+              setIsDeleting(false);
+            }
+          },
+        },
+      ]
+    );
+  };
+
   return (
     <View style={styles.container}>
-      <LinearGradient
-        colors={['#000000', '#000000', '#000000']}
-        style={styles.background}
-      >
+      <View style={styles.background}>
         <View style={styles.content}>
           {renderContent()}
         </View>
@@ -132,24 +210,26 @@ export const MainAppScreen: React.FC<MainAppScreenProps> = ({ navigation }) => {
             </Text>
           </TouchableOpacity>
         </View>
-      </LinearGradient>
-
-      <View
-        style={[
-          styles.headerOverlay,
-          { top: insets.top + 4, right: 20 },
-        ]}
-        pointerEvents="box-none"
-      >
-        <TouchableOpacity
-          style={styles.settingsButton}
-          onPress={() => setSettingsVisible(true)}
-          accessibilityRole="button"
-          accessibilityLabel="Open settings"
-        >
-          <Ionicons name="settings-outline" size={22} color="#fff" />
-        </TouchableOpacity>
       </View>
+
+      {!(activeTab === 'coach' && !isPremiumUser) && (
+        <View
+          style={[
+            styles.headerOverlay,
+            { top: insets.top + 4, right: 20 },
+          ]}
+          pointerEvents="box-none"
+        >
+          <TouchableOpacity
+            style={styles.settingsButton}
+            onPress={() => setSettingsVisible(true)}
+            accessibilityRole="button"
+            accessibilityLabel="Open settings"
+          >
+            <Ionicons name="settings-outline" size={22} color="#fff" />
+          </TouchableOpacity>
+        </View>
+      )}
 
       <Modal
         visible={settingsVisible}
@@ -176,13 +256,25 @@ export const MainAppScreen: React.FC<MainAppScreenProps> = ({ navigation }) => {
           <TouchableOpacity
             style={styles.logoutButton}
             onPress={handleLogout}
+            disabled={isDeleting}
           >
             <Ionicons name="log-out-outline" size={20} color="#fff" />
             <Text style={styles.logoutText}>Log Out</Text>
           </TouchableOpacity>
           <TouchableOpacity
+            style={[styles.deleteButton, isDeleting && styles.deleteButtonDisabled]}
+            onPress={handleDeleteAccount}
+            disabled={isDeleting}
+          >
+            <Ionicons name="trash-outline" size={20} color="#fff" />
+            <Text style={styles.deleteText}>
+              {isDeleting ? 'Deleting...' : 'Delete Account'}
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
             style={styles.sheetCancel}
             onPress={() => setSettingsVisible(false)}
+            disabled={isDeleting}
           >
             <Text style={styles.sheetCancelText}>Cancel</Text>
           </TouchableOpacity>
@@ -198,6 +290,7 @@ const styles = StyleSheet.create({
   },
   background: {
     flex: 1,
+    backgroundColor: '#000000',
   },
   content: {
     flex: 1,
@@ -208,13 +301,15 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
   },
   bottomNav: {
     flexDirection: 'row',
-    backgroundColor: 'rgba(0, 0, 0, 0.9)',
+    backgroundColor: '#000000',
     borderTopWidth: 1,
-    borderTopColor: 'rgba(255, 107, 53, 0.2)',
+    borderTopColor: 'rgba(255, 255, 255, 0.1)',
     paddingVertical: 12,
     paddingHorizontal: 20,
     paddingBottom: 34, // Account for safe area
@@ -225,7 +320,7 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
   },
   activeNavItem: {
-    backgroundColor: 'rgba(255, 107, 53, 0.1)',
+    backgroundColor: 'rgba(255, 107, 53, 0.08)',
     borderRadius: 12,
   },
   navText: {
@@ -255,12 +350,16 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0, 0, 0, 0.4)',
   },
   bottomSheet: {
-    backgroundColor: '#111',
+    backgroundColor: '#000000',
     paddingHorizontal: 20,
     paddingTop: 16,
     paddingBottom: 34,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
+    borderTopWidth: 1,
+    borderLeftWidth: 1,
+    borderRightWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
   },
   sheetHandle: {
     alignSelf: 'center',
@@ -273,7 +372,7 @@ const styles = StyleSheet.create({
   sheetTitle: {
     fontSize: 20,
     color: '#fff',
-    fontFamily: fonts.bold,
+    fontFamily: fonts.regular,
     textAlign: 'center',
     marginTop: -8,
     marginBottom: 12,
@@ -293,10 +392,28 @@ const styles = StyleSheet.create({
     backgroundColor: '#FF6B35',
     paddingVertical: 14,
     justifyContent: 'center',
-    borderRadius: 16,
+    borderRadius: 12,
     marginBottom: 12,
   },
   logoutText: {
+    color: '#fff',
+    fontSize: 16,
+    fontFamily: fonts.bold,
+  },
+  deleteButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    backgroundColor: '#E63222',
+    paddingVertical: 14,
+    justifyContent: 'center',
+    borderRadius: 12,
+    marginBottom: 12,
+  },
+  deleteButtonDisabled: {
+    backgroundColor: 'rgba(230, 50, 34, 0.5)',
+  },
+  deleteText: {
     color: '#fff',
     fontSize: 16,
     fontFamily: fonts.bold,
@@ -305,11 +422,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
-    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
     paddingVertical: 14,
     justifyContent: 'center',
-    borderRadius: 16,
+    borderRadius: 12,
     marginBottom: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
   },
   sheetButtonText: {
     color: '#fff',

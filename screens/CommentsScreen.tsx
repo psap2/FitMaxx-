@@ -127,11 +127,11 @@ export const CommentsScreen: React.FC<CommentsScreenProps> = ({ navigation, rout
 
   if (loading) {
     return (
-      <LinearGradient colors={['#0B0B0F', '#0B0B0F']} style={styles.container}>
+      <View style={styles.container}>
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color="#FF6B35" />
         </View>
-      </LinearGradient>
+      </View>
     );
   }
 
@@ -140,7 +140,7 @@ export const CommentsScreen: React.FC<CommentsScreenProps> = ({ navigation, rout
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       style={styles.container}
     >
-      <LinearGradient colors={['#0B0B0F', '#0B0B0F']} style={styles.container}>
+      <View style={styles.container}>
         <View style={styles.header}>
           <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
             <Ionicons name="arrow-back" size={24} color="#fff" />
@@ -205,7 +205,7 @@ export const CommentsScreen: React.FC<CommentsScreenProps> = ({ navigation, rout
             )}
           </TouchableOpacity>
         </View>
-      </LinearGradient>
+      </View>
     </KeyboardAvoidingView>
   );
 };
@@ -213,6 +213,7 @@ export const CommentsScreen: React.FC<CommentsScreenProps> = ({ navigation, rout
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: '#000000',
   },
   loadingContainer: {
     flex: 1,
@@ -226,7 +227,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingBottom: 20,
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255, 107, 53, 0.2)',
+    borderBottomColor: 'rgba(255, 255, 255, 0.1)',
   },
   backButton: {
     padding: 8,
@@ -234,7 +235,7 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontSize: 24,
-    fontFamily: fonts.bold,
+    fontFamily: fonts.regular,
     color: '#fff',
   },
   commentsList: {
@@ -252,7 +253,7 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: 20,
-    fontFamily: fonts.bold,
+    fontFamily: fonts.regular,
     color: '#fff',
     marginTop: 16,
   },

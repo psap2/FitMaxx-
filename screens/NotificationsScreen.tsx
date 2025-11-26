@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RouteProp } from '@react-navigation/native';
@@ -33,9 +32,21 @@ export const NotificationsScreen: React.FC<NotificationsScreenProps> = ({ naviga
     navigation.navigate('Auth', route.params);
   };
 
+  const handleBack = () => {
+    if (navigation.canGoBack()) {
+      navigation.goBack();
+    }
+  };
+
   return (
-    <LinearGradient colors={['#000000', '#000000', '#000000']} style={styles.container}>
+    <View style={styles.container}>
       <ProgressBar currentStep={5} totalSteps={6} />
+      
+      <TouchableOpacity style={styles.backButton} onPress={handleBack}>
+        <View style={styles.backButtonCircle}>
+          <Ionicons name="arrow-back" size={20} color="#FF6B35" />
+        </View>
+      </TouchableOpacity>
       
       <View style={styles.content}>
         <View style={styles.iconContainer}>
@@ -66,13 +77,8 @@ export const NotificationsScreen: React.FC<NotificationsScreenProps> = ({ naviga
 
         {!enabled && (
           <TouchableOpacity style={styles.enableButton} onPress={handleEnable}>
-            <LinearGradient
-              colors={['#FF6B35', '#FF8C42']}
-              style={styles.enableGradient}
-            >
-              <Ionicons name="notifications-outline" size={24} color="#fff" />
-              <Text style={styles.enableText}>Enable Notifications</Text>
-            </LinearGradient>
+            <Ionicons name="notifications-outline" size={20} color="#fff" />
+            <Text style={styles.enableText}>Enable Notifications</Text>
           </TouchableOpacity>
         )}
 
@@ -85,21 +91,17 @@ export const NotificationsScreen: React.FC<NotificationsScreenProps> = ({ naviga
         style={styles.continueButton}
         onPress={handleContinue}
       >
-        <LinearGradient
-          colors={['#FF6B35', '#FF8C42']}
-          style={styles.continueGradient}
-        >
-          <Text style={styles.continueText}>Continue</Text>
-          <Ionicons name="arrow-forward" size={24} color="#fff" />
-        </LinearGradient>
+        <Text style={styles.continueText}>Continue</Text>
+        <Ionicons name="arrow-forward" size={20} color="#fff" />
       </TouchableOpacity>
-    </LinearGradient>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: '#000000',
   },
   content: {
     flex: 1,
@@ -114,25 +116,27 @@ const styles = StyleSheet.create({
     width: 140,
     height: 140,
     borderRadius: 70,
-    backgroundColor: 'rgba(79, 172, 254, 0.1)',
+    backgroundColor: 'rgba(255, 107, 53, 0.08)',
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 2,
-    borderColor: 'rgba(79, 172, 254, 0.3)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 107, 53, 0.2)',
   },
   title: {
-    fontSize: 32,
-    fontFamily: fonts.bold,
+    fontSize: 28,
+    fontFamily: fonts.regular,
     color: '#fff',
     textAlign: 'center',
-    marginBottom: 12,
+    marginBottom: 8,
+    letterSpacing: 0.5,
   },
   subtitle: {
-    fontSize: 16,
-    color: 'rgba(255, 255, 255, 0.7)',
+    fontSize: 15,
+    fontFamily: fonts.regular,
+    color: 'rgba(255, 255, 255, 0.6)',
     textAlign: 'center',
     marginBottom: 40,
-    lineHeight: 24,
+    lineHeight: 22,
   },
   benefitsContainer: {
     marginBottom: 30,
@@ -144,52 +148,76 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
   },
   benefitText: {
-    fontSize: 16,
-    color: 'rgba(255, 255, 255, 0.8)',
+    fontSize: 15,
+    fontFamily: fonts.regular,
+    color: 'rgba(255, 255, 255, 0.7)',
     marginLeft: 12,
   },
   enableButton: {
-    borderRadius: 16,
-    overflow: 'hidden',
-    marginBottom: 16,
-  },
-  enableGradient: {
+    borderRadius: 12,
+    backgroundColor: '#FF6B35',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 16,
-    gap: 12,
+    gap: 10,
+    marginBottom: 16,
   },
   enableText: {
     color: '#fff',
-    fontSize: 18,
-    fontFamily: fonts.bold,
+    fontSize: 16,
+    fontFamily: fonts.regular,
+    letterSpacing: 0.3,
   },
   skipButton: {
     padding: 12,
   },
   skipText: {
     color: 'rgba(255, 255, 255, 0.6)',
-    fontSize: 16,
+    fontSize: 15,
+    fontFamily: fonts.regular,
     textAlign: 'center',
     textDecorationLine: 'underline',
   },
   continueButton: {
     marginHorizontal: 20,
     marginBottom: 64,
-    borderRadius: 16,
-    overflow: 'hidden',
-  },
-  continueGradient: {
+    borderRadius: 12,
+    backgroundColor: '#FF6B35',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 18,
-    gap: 12,
+    paddingVertical: 16,
+    gap: 10,
   },
   continueText: {
     color: '#fff',
-    fontSize: 18,
-    fontFamily: fonts.bold,
+    fontSize: 16,
+    fontFamily: fonts.regular,
+    letterSpacing: 0.3,
+  },
+  backButton: {
+    position: 'absolute',
+    top: 90,
+    left: 20,
+    zIndex: 10,
+    width: 48,
+    height: 40,
+    backgroundColor: '#000000',
+    borderRadius: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  backButtonCircle: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: 'transparent',
+    borderWidth: 1.5,
+    borderColor: '#FF6B35',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });

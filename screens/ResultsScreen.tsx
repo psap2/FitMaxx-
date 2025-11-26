@@ -146,6 +146,9 @@ export const ResultsScreen: React.FC<ResultsScreenProps> = ({ navigation, route 
       const toStoredScore = (value: number | undefined | null) =>
         typeof value === 'number' && !isNaN(value) ? Math.round(value) : null;
 
+      // Extract hash from analysis if present (added by API for duplicate detection)
+      const imageHash = (analysis as any)._hash || null;
+
       await createPost({
         user_id: userId,
         image_url: storagePath ?? '',
@@ -156,6 +159,7 @@ export const ResultsScreen: React.FC<ResultsScreenProps> = ({ navigation, route 
           : null,
         symmetry: toStoredScore(analysis.symmetry * 10),
         summaryrecc: analysis.summaryRecommendation,
+        hash: imageHash, // Store the image hash for duplicate detection
         // Save premium scores if they exist
         chest: analysis.premiumScores?.chest ? toStoredScore(analysis.premiumScores.chest * 10) : null,
         quads: analysis.premiumScores?.quads ? toStoredScore(analysis.premiumScores.quads * 10) : null,
@@ -169,7 +173,8 @@ export const ResultsScreen: React.FC<ResultsScreenProps> = ({ navigation, route 
         traps: analysis.premiumScores?.traps ? toStoredScore(analysis.premiumScores.traps * 10) : null,
       });
 
-      Alert.alert('Saved', 'Your analysis has been saved to your progress.');
+      // Navigate back to MainApp (scan tab with "Begin Scan" button) after saving
+      navigation.navigate('MainApp');
     } catch (error) {
       console.error('Failed to persist analysis result:', error);
       Alert.alert('Save Failed', 'We could not save your analysis. Please try again.');
@@ -297,7 +302,7 @@ export const ResultsScreen: React.FC<ResultsScreenProps> = ({ navigation, route 
   };
 
   return (
-    <LinearGradient colors={['#0B0B0F', '#0B0B0F']} style={styles.container}>
+    <View style={styles.container}>
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
         <View style={styles.content}>
           <TouchableOpacity
@@ -409,16 +414,14 @@ export const ResultsScreen: React.FC<ResultsScreenProps> = ({ navigation, route 
                         onPress={handleUpgradePress}
                         disabled={isCreatingReferral}
                       >
-                        <LinearGradient colors={['#FF6B35', '#FF8C42']} style={styles.upgradeGradient}>
-                          {isCreatingReferral ? (
-                            <ActivityIndicator size="small" color="#fff" />
-                          ) : (
-                            <>
-                              <Ionicons name="star" size={20} color="#fff" style={styles.upgradeIcon} />
-                              <Text style={styles.upgradeButtonText}>Get Premium</Text>
-                            </>
-                          )}
-                        </LinearGradient>
+                        {isCreatingReferral ? (
+                          <ActivityIndicator size="small" color="#fff" />
+                        ) : (
+                          <>
+                            <Ionicons name="star" size={20} color="#fff" style={styles.upgradeIcon} />
+                            <Text style={styles.upgradeButtonText}>Get Premium</Text>
+                          </>
+                        )}
                       </TouchableOpacity>
                       <Text style={styles.upgradeSubtext}>
                         Join thousands of users getting detailed physique insights
@@ -465,20 +468,18 @@ export const ResultsScreen: React.FC<ResultsScreenProps> = ({ navigation, route 
           <View style={styles.buttonContainer}>
             {allowSave && (
               <TouchableOpacity
-                style={styles.actionButton}
+                style={[styles.actionButton, isSaving && styles.actionButtonDisabled]}
                 onPress={handleSave}
                 disabled={isSaving}
               >
-                <LinearGradient colors={['#FF6B35', '#FF8C42']} style={styles.buttonGradient}>
-                  {isSaving ? (
-                    <ActivityIndicator color="#fff" size="small" />
-                  ) : (
-                    <>
-                      <Ionicons name="save" size={20} color="#fff" />
-                      <Text style={styles.buttonText}>Save</Text>
-                    </>
-                  )}
-                </LinearGradient>
+                {isSaving ? (
+                  <ActivityIndicator color="#fff" size="small" />
+                ) : (
+                  <>
+                    <Ionicons name="save" size={20} color="#fff" />
+                    <Text style={styles.buttonText}>Save</Text>
+                  </>
+                )}
               </TouchableOpacity>
             )}
 
@@ -487,10 +488,8 @@ export const ResultsScreen: React.FC<ResultsScreenProps> = ({ navigation, route 
                 style={styles.actionButton}
                 onPress={() => navigation.navigate('Comments', { postId })}
               >
-                <LinearGradient colors={['#E63222', '#FF6A2F']} style={styles.buttonGradient}>
-                  <Ionicons name="chatbubble" size={20} color="#fff" />
-                  <Text style={styles.buttonText}>Notes</Text>
-                </LinearGradient>
+                <Ionicons name="chatbubble" size={20} color="#fff" />
+                <Text style={styles.buttonText}>Notes</Text>
               </TouchableOpacity>
             )}
 
@@ -501,21 +500,20 @@ export const ResultsScreen: React.FC<ResultsScreenProps> = ({ navigation, route 
                 console.log('Share results');
               }}
             >
-              <LinearGradient colors={['#FF6B35', '#FF8C42']} style={styles.buttonGradient}>
-                <Ionicons name="share" size={20} color="#fff" />
-                <Text style={styles.buttonText}>Share</Text>
-              </LinearGradient>
+              <Ionicons name="share" size={20} color="#fff" />
+              <Text style={styles.buttonText}>Share</Text>
             </TouchableOpacity>
           </View>
         </View>
       </ScrollView>
-    </LinearGradient>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: '#000000',
   },
   scrollView: {
     flex: 1,
@@ -534,11 +532,11 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 24,
-    fontFamily: fonts.bold,
+    fontFamily: fonts.regular,
     color: '#fff',
     textAlign: 'center',
     marginBottom: 20,
-    letterSpacing: 2,
+    letterSpacing: 0.5,
   },
   imageWrapper: {
     marginBottom: 30,
@@ -578,7 +576,7 @@ const styles = StyleSheet.create({
   },
   metricValue: {
     fontSize: 28,
-    fontFamily: fonts.bold,
+    fontFamily: fonts.regular,
     marginBottom: 6,
     color: '#FFFFFF',
   },
@@ -613,7 +611,7 @@ const styles = StyleSheet.create({
   },
   summaryTitle: {
     fontSize: 18,
-    fontFamily: fonts.bold,
+    fontFamily: fonts.regular,
     color: '#FF6B35',
     marginBottom: 10,
   },
@@ -629,7 +627,7 @@ const styles = StyleSheet.create({
   },
   premiumTitle: {
     fontSize: 18,
-    fontFamily: fonts.bold,
+    fontFamily: fonts.regular,
     color: '#fff',
     marginBottom: 16,
     paddingBottom: 16,
@@ -709,7 +707,7 @@ const styles = StyleSheet.create({
   },
   upgradeTitle: {
     fontSize: 22,
-    fontFamily: fonts.bold,
+    fontFamily: fonts.regular,
     color: '#fff',
     marginBottom: 10,
     textAlign: 'center',
@@ -723,30 +721,23 @@ const styles = StyleSheet.create({
     paddingHorizontal: 4,
   },
   upgradeButton: {
-    borderRadius: 16,
-    overflow: 'hidden',
-    marginBottom: 12,
-    shadowColor: '#FF6B35',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 4,
-  },
-  upgradeGradient: {
+    borderRadius: 12,
+    backgroundColor: '#FF6B35',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 16,
     paddingHorizontal: 32,
     gap: 8,
+    marginBottom: 12,
   },
   upgradeIcon: {
     marginRight: 4,
   },
   upgradeButtonText: {
     color: '#fff',
-    fontSize: 18,
-    fontFamily: fonts.bold,
+    fontSize: 16,
+    fontFamily: fonts.regular,
     textAlign: 'center',
   },
   upgradeSubtext: {
@@ -768,7 +759,7 @@ const styles = StyleSheet.create({
   },
   suggestionsTitle: {
     fontSize: 20,
-    fontFamily: fonts.bold,
+    fontFamily: fonts.regular,
     color: '#FF6B35',
     marginBottom: 12,
   },
@@ -782,7 +773,7 @@ const styles = StyleSheet.create({
   },
   suggestionTitle: {
     fontSize: 18,
-    fontFamily: fonts.bold,
+    fontFamily: fonts.regular,
     color: '#FF6B35',
     marginLeft: 10,
   },
@@ -814,18 +805,19 @@ const styles = StyleSheet.create({
     flex: 1,
     marginHorizontal: 5,
     borderRadius: 12,
-    overflow: 'hidden',
-  },
-  buttonGradient: {
+    backgroundColor: '#FF6B35',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 15,
     gap: 8,
   },
+  actionButtonDisabled: {
+    backgroundColor: 'rgba(255, 107, 53, 0.5)',
+  },
   buttonText: {
     color: '#fff',
-    fontSize: 16,
-    fontFamily: fonts.bold,
+    fontSize: 15,
+    fontFamily: fonts.regular,
   },
 });

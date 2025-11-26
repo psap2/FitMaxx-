@@ -70,6 +70,12 @@ export const updateUser = async (userId: string, updates: Partial<User>) => {
   });
 };
 
+export const deleteUser = async (userId: string) => {
+  return apiCall(`/users/${userId}`, {
+    method: 'DELETE',
+  });
+};
+
 // Post functions
 type PostInsert = Omit<Post, 'id' | 'created_at'>;
 

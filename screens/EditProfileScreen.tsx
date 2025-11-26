@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState, useRef } from 'react';
 import {
   View,
   Text,
@@ -16,6 +16,7 @@ import { RootStackParamList } from '../types';
 import { fonts } from '../theme/fonts';
 import { supabase } from '../utils/supabase';
 import { updateUser } from '../utils/api';
+import { convertHeightToInches, convertWeightToLbs } from '../utils/conversionUtils';
 
 type EditProfileNavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
@@ -27,8 +28,103 @@ export const EditProfileScreen: React.FC = () => {
   const [userId, setUserId] = useState<string | null>(null);
   const [weight, setWeight] = useState('');
   const [height, setHeight] = useState('');
+  const [weightUnit, setWeightUnit] = useState<'lbs' | 'kg'>('lbs');
+  const [heightUnit, setHeightUnit] = useState<'in' | 'cm'>('in');
   const [editingField, setEditingField] = useState<'weight' | 'height' | null>(null);
 
+
+  const handleSave = async () => {
+    if (!userId) return;
+
+    const parsedHeight = parseFloat(height);
+    const parsedWeight = parseFloat(weight);
+
+    if (isNaN(parsedHeight) || parsedHeight <= 0) {
+      Alert.alert('Invalid Height', `Please enter a valid height in ${heightUnit === 'in' ? 'inches' : 'centimeters'}.`);
+      return;
+    }
+
+    if (isNaN(parsedWeight) || parsedWeight <= 0) {
+      Alert.alert('Invalid Weight', `Please enter a valid weight in ${weightUnit === 'lbs' ? 'pounds' : 'kilograms'}.`);
+      return;
+    }
+
+    // Convert to inches and lbs for storage (must be integers/bigint)
+    let heightInInches: number;
+    if (heightUnit === 'cm') {
+      heightInInches = parsedHeight / 2.54;
+    } else {
+      heightInInches = parsedHeight;
+    }
+
+    let weightInLbs: number;
+    if (weightUnit === 'kg') {
+      weightInLbs = parsedWeight * 2.20462;
+    } else {
+      weightInLbs = parsedWeight;
+    }
+
+    setSaving(true);
+    try {
+      await updateUser(userId, {
+        height: Math.round(heightInInches), // Must be integer
+        weight: Math.round(weightInLbs), // Must be integer (bigint)
+      });
+
+      Alert.alert('Profile Updated', 'Your profile has been updated successfully.');
+      navigation.goBack();
+    } catch (updateError: any) {
+      console.error('Error updating profile:', updateError);
+      Alert.alert('Update Failed', updateError.message ?? 'Could not update profile.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const editable = editingField !== null;
+
+  // Track previous unit to know which direction to convert
+  const prevHeightUnit = useRef<'in' | 'cm'>('in');
+  const prevWeightUnit = useRef<'lbs' | 'kg'>('lbs');
+
+  // Convert stored values when unit changes
+  useEffect(() => {
+    if (height && !editingField && prevHeightUnit.current !== heightUnit) {
+      const heightNum = parseFloat(height);
+      if (!isNaN(heightNum)) {
+        if (prevHeightUnit.current === 'in' && heightUnit === 'cm') {
+          // Converting from inches to cm
+          const heightInCm = heightNum * 2.54;
+          setHeight(heightInCm.toFixed(1));
+        } else if (prevHeightUnit.current === 'cm' && heightUnit === 'in') {
+          // Converting from cm to inches
+          const heightInInches = heightNum / 2.54;
+          setHeight(heightInInches.toFixed(1));
+        }
+      }
+      prevHeightUnit.current = heightUnit;
+    }
+  }, [heightUnit, height, editingField]);
+
+  useEffect(() => {
+    if (weight && !editingField && prevWeightUnit.current !== weightUnit) {
+      const weightNum = parseFloat(weight);
+      if (!isNaN(weightNum)) {
+        if (prevWeightUnit.current === 'lbs' && weightUnit === 'kg') {
+          // Converting from lbs to kg
+          const weightInKg = weightNum / 2.20462;
+          setWeight(weightInKg.toFixed(1));
+        } else if (prevWeightUnit.current === 'kg' && weightUnit === 'lbs') {
+          // Converting from kg to lbs
+          const weightInLbs = weightNum * 2.20462;
+          setWeight(weightInLbs.toFixed(1));
+        }
+      }
+      prevWeightUnit.current = weightUnit;
+    }
+  }, [weightUnit, weight, editingField]);
+
+  // Load initial values and convert based on current unit
   useEffect(() => {
     const fetchProfile = async () => {
       try {
@@ -58,8 +154,29 @@ export const EditProfileScreen: React.FC = () => {
           return;
         }
 
-        setHeight(profile.height ? String(profile.height) : '');
-        setWeight(profile.weight ? String(profile.weight) : '');
+        // Convert stored values (inches/lbs) to display units
+        if (profile.height) {
+          if (heightUnit === 'cm') {
+            setHeight((profile.height * 2.54).toFixed(1));
+          } else {
+            setHeight(String(profile.height));
+          }
+          prevHeightUnit.current = heightUnit;
+        } else {
+          setHeight('');
+        }
+
+        if (profile.weight) {
+          if (weightUnit === 'kg') {
+            setWeight((profile.weight / 2.20462).toFixed(1));
+          } else {
+            setWeight(String(profile.weight));
+          }
+          prevWeightUnit.current = weightUnit;
+        } else {
+          setWeight('');
+        }
+
         setLoading(false);
       } catch (fetchError: any) {
         console.error('Error loading profile:', fetchError);
@@ -69,42 +186,8 @@ export const EditProfileScreen: React.FC = () => {
     };
 
     fetchProfile();
-  }, []);
-
-  const handleSave = async () => {
-    if (!userId) return;
-
-    const parsedHeight = parseInt(height, 10);
-    const parsedWeight = parseInt(weight, 10);
-
-    if (isNaN(parsedHeight) || parsedHeight <= 0) {
-      Alert.alert('Invalid Height', 'Please enter a valid height in inches.');
-      return;
-    }
-
-    if (isNaN(parsedWeight) || parsedWeight <= 0) {
-      Alert.alert('Invalid Weight', 'Please enter a valid weight in pounds.');
-      return;
-    }
-
-    setSaving(true);
-    try {
-      await updateUser(userId, {
-        height: parsedHeight,
-        weight: parsedWeight,
-      });
-
-      Alert.alert('Profile Updated', 'Your profile has been updated successfully.');
-      navigation.goBack();
-    } catch (updateError: any) {
-      console.error('Error updating profile:', updateError);
-      Alert.alert('Update Failed', updateError.message ?? 'Could not update profile.');
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const editable = editingField !== null;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Only fetch once on mount
 
   const fieldsMarkup = useMemo(
     () => (
@@ -112,47 +195,95 @@ export const EditProfileScreen: React.FC = () => {
         <View style={styles.fieldCard}>
           <View style={styles.fieldHeader}>
             <Text style={styles.fieldLabel}>Height</Text>
-            <TouchableOpacity onPress={() => setEditingField('height')}>
-              <Ionicons name="create-outline" size={20} color="#FF6B35" />
-            </TouchableOpacity>
+            <View style={styles.fieldHeaderRight}>
+              <View style={styles.unitToggle}>
+                <TouchableOpacity
+                  style={[styles.unitButton, heightUnit === 'in' && styles.unitButtonActive]}
+                  onPress={() => {
+                    if (heightUnit !== 'in') {
+                      setHeightUnit('in');
+                    }
+                  }}
+                >
+                  <Text style={[styles.unitText, heightUnit === 'in' && styles.unitTextActive]}>in</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.unitButton, heightUnit === 'cm' && styles.unitButtonActive]}
+                  onPress={() => {
+                    if (heightUnit !== 'cm') {
+                      setHeightUnit('cm');
+                    }
+                  }}
+                >
+                  <Text style={[styles.unitText, heightUnit === 'cm' && styles.unitTextActive]}>cm</Text>
+                </TouchableOpacity>
+              </View>
+              <TouchableOpacity onPress={() => setEditingField('height')}>
+                <Ionicons name="create-outline" size={20} color="#FF6B35" />
+              </TouchableOpacity>
+            </View>
           </View>
           {editingField === 'height' ? (
             <TextInput
               value={height}
-              onChangeText={(value) => setHeight(value.replace(/[^0-9]/g, ''))}
-              keyboardType="number-pad"
+              onChangeText={(value) => setHeight(value.replace(/[^0-9.]/g, ''))}
+              keyboardType="decimal-pad"
               style={styles.fieldInput}
-              placeholder="Height in inches"
+              placeholder={`Height in ${heightUnit === 'in' ? 'inches' : 'centimeters'}`}
               placeholderTextColor="rgba(255, 255, 255, 0.3)"
             />
           ) : (
-            <Text style={styles.fieldValue}>{height || '--'} in</Text>
+            <Text style={styles.fieldValue}>{height || '--'} {heightUnit}</Text>
           )}
         </View>
 
         <View style={styles.fieldCard}>
           <View style={styles.fieldHeader}>
             <Text style={styles.fieldLabel}>Weight</Text>
-            <TouchableOpacity onPress={() => setEditingField('weight')}>
-              <Ionicons name="create-outline" size={20} color="#FF6B35" />
-            </TouchableOpacity>
+            <View style={styles.fieldHeaderRight}>
+              <View style={styles.unitToggle}>
+                <TouchableOpacity
+                  style={[styles.unitButton, weightUnit === 'lbs' && styles.unitButtonActive]}
+                  onPress={() => {
+                    if (weightUnit !== 'lbs') {
+                      setWeightUnit('lbs');
+                    }
+                  }}
+                >
+                  <Text style={[styles.unitText, weightUnit === 'lbs' && styles.unitTextActive]}>lbs</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.unitButton, weightUnit === 'kg' && styles.unitButtonActive]}
+                  onPress={() => {
+                    if (weightUnit !== 'kg') {
+                      setWeightUnit('kg');
+                    }
+                  }}
+                >
+                  <Text style={[styles.unitText, weightUnit === 'kg' && styles.unitTextActive]}>kg</Text>
+                </TouchableOpacity>
+              </View>
+              <TouchableOpacity onPress={() => setEditingField('weight')}>
+                <Ionicons name="create-outline" size={20} color="#FF6B35" />
+              </TouchableOpacity>
+            </View>
           </View>
           {editingField === 'weight' ? (
             <TextInput
               value={weight}
-              onChangeText={(value) => setWeight(value.replace(/[^0-9]/g, ''))}
-              keyboardType="number-pad"
+              onChangeText={(value) => setWeight(value.replace(/[^0-9.]/g, ''))}
+              keyboardType="decimal-pad"
               style={styles.fieldInput}
-              placeholder="Weight in lbs"
+              placeholder={`Weight in ${weightUnit === 'lbs' ? 'pounds' : 'kilograms'}`}
               placeholderTextColor="rgba(255, 255, 255, 0.3)"
             />
           ) : (
-            <Text style={styles.fieldValue}>{weight || '--'} lbs</Text>
+            <Text style={styles.fieldValue}>{weight || '--'} {weightUnit}</Text>
           )}
         </View>
       </View>
     ),
-    [editingField, height, weight],
+    [editingField, height, weight, heightUnit, weightUnit],
   );
 
   if (loading) {
@@ -175,7 +306,7 @@ export const EditProfileScreen: React.FC = () => {
   }
 
   return (
-    <LinearGradient colors={['#000000', '#000000', '#000000']} style={styles.container}>
+    <View style={styles.container}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
           <Ionicons name="arrow-back" size={24} color="#fff" />
@@ -187,31 +318,27 @@ export const EditProfileScreen: React.FC = () => {
       <View style={styles.content}>{fieldsMarkup}</View>
 
       <TouchableOpacity
-        style={[styles.saveButton, editable ? null : styles.saveButtonDisabled]}
+        style={[styles.saveButton, (!editable || saving) && styles.saveButtonDisabled]}
         onPress={handleSave}
         disabled={!editable || saving}
       >
-        <LinearGradient
-          colors={editable ? ['#FF6B35', '#FF8C42'] : ['#444', '#666']}
-          style={styles.saveGradient}
-        >
-          {saving ? (
-            <ActivityIndicator color="#fff" />
-          ) : (
-            <>
-              <Ionicons name="save-outline" size={22} color="#fff" />
-              <Text style={styles.saveText}>Save Changes</Text>
-            </>
-          )}
-        </LinearGradient>
+        {saving ? (
+          <ActivityIndicator color="#fff" />
+        ) : (
+          <>
+            <Ionicons name="save-outline" size={22} color="#fff" />
+            <Text style={styles.saveText}>Save Changes</Text>
+          </>
+        )}
       </TouchableOpacity>
-    </LinearGradient>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: '#000000',
     paddingHorizontal: 20,
     paddingTop: 60,
   },
@@ -235,7 +362,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 20,
     color: '#fff',
-    fontFamily: fonts.bold,
+    fontFamily: fonts.regular,
   },
   content: {
     flex: 1,
@@ -256,6 +383,35 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     marginBottom: 12,
   },
+  fieldHeaderRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  unitToggle: {
+    flexDirection: 'row',
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    borderRadius: 8,
+    padding: 2,
+    gap: 2,
+  },
+  unitButton: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 6,
+  },
+  unitButtonActive: {
+    backgroundColor: '#FF6B35',
+  },
+  unitText: {
+    color: 'rgba(255, 255, 255, 0.6)',
+    fontSize: 14,
+    fontFamily: fonts.regular,
+  },
+  unitTextActive: {
+    color: '#fff',
+    fontFamily: fonts.bold,
+  },
   fieldLabel: {
     color: 'rgba(255, 255, 255, 0.7)',
     fontSize: 16,
@@ -264,35 +420,33 @@ const styles = StyleSheet.create({
   fieldValue: {
     color: '#fff',
     fontSize: 28,
-    fontFamily: fonts.bold,
+    fontFamily: fonts.regular,
   },
   fieldInput: {
     fontSize: 24,
     color: '#fff',
-    fontFamily: fonts.bold,
+    fontFamily: fonts.regular,
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255, 255, 255, 0.2)',
+    borderBottomColor: 'rgba(255, 255, 255, 0.1)',
     paddingVertical: 8,
   },
   saveButton: {
-    borderRadius: 18,
-    overflow: 'hidden',
-    marginBottom: 34,
-  },
-  saveButtonDisabled: {
-    opacity: 0.5,
-  },
-  saveGradient: {
+    borderRadius: 12,
+    backgroundColor: '#FF6B35',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 18,
+    paddingVertical: 16,
     gap: 10,
+    marginBottom: 34,
+  },
+  saveButtonDisabled: {
+    backgroundColor: 'rgba(255, 107, 53, 0.5)',
   },
   saveText: {
     color: '#fff',
-    fontSize: 18,
-    fontFamily: fonts.bold,
+    fontSize: 16,
+    fontFamily: fonts.regular,
   },
   loadingContainer: {
     flex: 1,

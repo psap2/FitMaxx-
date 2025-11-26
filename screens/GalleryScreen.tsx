@@ -232,7 +232,7 @@ const GalleryScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0B0B0F',
+    backgroundColor: '#000000',
     paddingHorizontal: 16,
     paddingTop: 60,
   },
@@ -243,27 +243,27 @@ const styles = StyleSheet.create({
   },
   header: {
     fontSize: 24,
-    fontFamily: fonts.bold,
+    fontFamily: fonts.regular,
     color: '#fff',
     marginBottom: 20,
     textAlign: 'center',
   },
   loaderContainer: {
     flex: 1,
-    backgroundColor: '#0B0B0F',
+    backgroundColor: '#000000',
     alignItems: 'center',
     justifyContent: 'center',
   },
   emptyContainer: {
     flex: 1,
-    backgroundColor: '#0B0B0F',
+    backgroundColor: '#000000',
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 24,
   },
   emptyTitle: {
     fontSize: 22,
-    fontFamily: fonts.bold,
+    fontFamily: fonts.regular,
     color: '#fff',
     marginBottom: 8,
   },
@@ -318,7 +318,7 @@ const styles = StyleSheet.create({
   },
   overallText: {
     color: '#fff',
-    fontFamily: fonts.bold,
+    fontFamily: fonts.regular,
     fontSize: 14,
   },
   premiumBadge: {
@@ -335,7 +335,7 @@ const styles = StyleSheet.create({
   },
   premiumBadgeText: {
     color: '#FFD700',
-    fontFamily: fonts.bold,
+    fontFamily: fonts.regular,
     fontSize: 10,
     marginLeft: 2,
   },

@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, TextInput, Alert, ActivityIndicator } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RouteProp } from '@react-navigation/native';
@@ -98,9 +97,21 @@ export const ReferralScreen: React.FC<ReferralScreenProps> = ({ navigation, rout
     });
   };
 
+  const handleBack = () => {
+    if (navigation.canGoBack()) {
+      navigation.goBack();
+    }
+  };
+
   return (
-    <LinearGradient colors={['#000000', '#000000', '#000000']} style={styles.container}>
+    <View style={styles.container}>
       <ProgressBar currentStep={4} totalSteps={6} />
+      
+      <TouchableOpacity style={styles.backButton} onPress={handleBack}>
+        <View style={styles.backButtonCircle}>
+          <Ionicons name="arrow-back" size={20} color="#FF6B35" />
+        </View>
+      </TouchableOpacity>
       
       <View style={styles.content}>
         <View style={styles.iconContainer}>
@@ -112,7 +123,7 @@ export const ReferralScreen: React.FC<ReferralScreenProps> = ({ navigation, rout
 
         <TextInput
           style={styles.input}
-          placeholder="Enter code (optional)"
+          placeholder="Enter code"
           placeholderTextColor="rgba(255, 255, 255, 0.3)"
           value={referralCode}
           onChangeText={setReferralCode}
@@ -130,27 +141,23 @@ export const ReferralScreen: React.FC<ReferralScreenProps> = ({ navigation, rout
         onPress={handleContinue}
         disabled={isProcessing}
       >
-        <LinearGradient
-          colors={['#FF6B35', '#FF8C42']}
-          style={styles.continueGradient}
-        >
-          {isProcessing ? (
-            <ActivityIndicator size="small" color="#fff" />
-          ) : (
-            <>
-              <Text style={styles.continueText}>Continue</Text>
-              <Ionicons name="arrow-forward" size={24} color="#fff" />
-            </>
-          )}
-        </LinearGradient>
+        {isProcessing ? (
+          <ActivityIndicator size="small" color="#fff" />
+        ) : (
+          <>
+            <Text style={styles.continueText}>Continue</Text>
+            <Ionicons name="arrow-forward" size={20} color="#fff" />
+          </>
+        )}
       </TouchableOpacity>
-    </LinearGradient>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: '#000000',
   },
   content: {
     flex: 1,
@@ -162,28 +169,30 @@ const styles = StyleSheet.create({
     marginBottom: 30,
   },
   title: {
-    fontSize: 32,
-    fontFamily: fonts.bold,
+    fontSize: 28,
+    fontFamily: fonts.regular,
     color: '#fff',
     textAlign: 'center',
-    marginBottom: 12,
+    marginBottom: 8,
+    letterSpacing: 0.5,
   },
   subtitle: {
-    fontSize: 16,
-    color: 'rgba(255, 255, 255, 0.7)',
+    fontSize: 15,
+    fontFamily: fonts.regular,
+    color: 'rgba(255, 255, 255, 0.6)',
     textAlign: 'center',
     marginBottom: 40,
   },
   input: {
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    borderRadius: 16,
-    padding: 20,
-    fontSize: 20,
-    fontFamily: fonts.bold,
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    borderRadius: 12,
+    padding: 18,
+    fontSize: 18,
+    fontFamily: fonts.regular,
     color: '#fff',
     textAlign: 'center',
-    borderWidth: 2,
-    borderColor: 'rgba(79, 172, 254, 0.3)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 107, 53, 0.3)',
     letterSpacing: 2,
   },
   skipButton: {
@@ -192,29 +201,53 @@ const styles = StyleSheet.create({
   },
   skipText: {
     color: 'rgba(255, 255, 255, 0.6)',
-    fontSize: 16,
+    fontSize: 15,
+    fontFamily: fonts.regular,
     textAlign: 'center',
     textDecorationLine: 'underline',
   },
   continueButton: {
     marginHorizontal: 20,
     marginBottom: 64,
-    borderRadius: 16,
-    overflow: 'hidden',
-  },
-  continueGradient: {
+    borderRadius: 12,
+    backgroundColor: '#FF6B35',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 18,
-    gap: 12,
+    paddingVertical: 16,
+    gap: 10,
   },
   continueText: {
     color: '#fff',
-    fontSize: 18,
-    fontFamily: fonts.bold,
+    fontSize: 16,
+    fontFamily: fonts.regular,
+    letterSpacing: 0.3,
   },
   disabledButton: {
     opacity: 0.7,
+  },
+  backButton: {
+    position: 'absolute',
+    top: 90,
+    left: 20,
+    zIndex: 10,
+    width: 48,
+    height: 40,
+    backgroundColor: '#000000',
+    borderRadius: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  backButtonCircle: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: 'transparent',
+    borderWidth: 1.5,
+    borderColor: '#FF6B35',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });

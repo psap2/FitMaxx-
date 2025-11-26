@@ -38,7 +38,11 @@ const uriToBase64 = async (uri: string): Promise<string> => {
   }
 };
 
-export const analyzePhysique = async (imageUri: string): Promise<PhysiqueAnalysis> => {
+export const analyzePhysique = async (
+  imageUri: string,
+  analysisId?: string,
+  userId?: string
+): Promise<PhysiqueAnalysis> => {
   try {
     // Convert image to base64
     console.log('Converting image to base64...');
@@ -75,6 +79,8 @@ export const analyzePhysique = async (imageUri: string): Promise<PhysiqueAnalysi
       },
       body: JSON.stringify({
         imageBase64,
+        analysisId,
+        userId,
       }),
       signal: controller.signal,
     }).catch((fetchError: any) => {

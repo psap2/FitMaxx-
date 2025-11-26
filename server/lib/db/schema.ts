@@ -31,6 +31,7 @@ export interface Post {
   shoulders?: number | null;
   forearms?: number | null;
   traps?: number | null;
+  hash: string | null;
 }
 
 export interface Comment {

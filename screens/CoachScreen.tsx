@@ -10,6 +10,7 @@ import {
   Alert,
   KeyboardAvoidingView,
   Platform,
+  Image,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
@@ -17,6 +18,7 @@ import { BlurView } from '@react-native-community/blur';
 import { fonts } from '../theme/fonts';
 import { supabase } from '../utils/supabase';
 import { getUser, createReferral, apiCall } from '../utils/api';
+import { MarkdownText } from '../components/MarkdownText';
 
 interface ChatMessage {
   role: 'user' | 'assistant';
@@ -158,14 +160,21 @@ export default function CoachScreen() {
 
   // Render the coach interface (blurred for non-premium users)
   const coachInterface = (
-    <LinearGradient colors={['#0B0B0F', '#0B0B0F']} style={styles.container}>
+    <View style={styles.container}>
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.container}
         keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
       >
         <View style={styles.header}>
-          <Text style={styles.headerTitle}>AI Coach</Text>
+          <View style={styles.headerTitleContainer}>
+            <Image 
+              source={require('../assets/maximus.png')} 
+              style={styles.headerLogo}
+              resizeMode="contain"
+            />
+            <Text style={styles.headerTitle}>Maximus</Text>
+          </View>
         </View>
 
         <ScrollView 
@@ -185,7 +194,11 @@ export default function CoachScreen() {
                 message.role === 'user' ? styles.userMessage : styles.assistantMessage,
               ]}
             >
-              <Text style={styles.messageText}>{message.content}</Text>
+              {message.role === 'assistant' ? (
+                <MarkdownText content={message.content} style={styles.messageText} />
+              ) : (
+                <Text style={styles.messageText}>{message.content}</Text>
+              )}
             </View>
           ))}
           {sending && (
@@ -219,7 +232,7 @@ export default function CoachScreen() {
           </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>
-    </LinearGradient>
+    </View>
   );
 
   if (!isPremiumUser) {
@@ -247,20 +260,18 @@ export default function CoachScreen() {
               Get personalized fitness coaching based on your goals, progress posts, and notes. Your AI coach will help you stay motivated and reach your fitness goals!
             </Text>
             <TouchableOpacity 
-              style={styles.upgradeButton}
+              style={[styles.upgradeButton, isCreatingReferral && styles.upgradeButtonDisabled]}
               onPress={handleUpgradePress}
               disabled={isCreatingReferral}
             >
-              <LinearGradient colors={['#FF6B35', '#FF8C42']} style={styles.upgradeGradient}>
-                {isCreatingReferral ? (
-                  <ActivityIndicator size="small" color="#fff" />
-                ) : (
-                  <>
-                    <Ionicons name="star" size={20} color="#fff" style={styles.upgradeIcon} />
-                    <Text style={styles.upgradeButtonText}>Get Premium</Text>
-                  </>
-                )}
-              </LinearGradient>
+              {isCreatingReferral ? (
+                <ActivityIndicator size="small" color="#fff" />
+              ) : (
+                <>
+                  <Ionicons name="star" size={20} color="#fff" style={styles.upgradeIcon} />
+                  <Text style={styles.upgradeButtonText}>Get Premium</Text>
+                </>
+              )}
             </TouchableOpacity>
             <Text style={styles.upgradeSubtext}>
               Join thousands of users getting personalized AI coaching
@@ -278,6 +289,7 @@ export default function CoachScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: '#000000',
   },
   loadingContainer: {
     flex: 1,
@@ -290,11 +302,20 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingBottom: 20,
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255, 107, 53, 0.2)',
+    borderBottomColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  headerTitleContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  headerLogo: {
+    width: 32,
+    height: 32,
   },
   headerTitle: {
     fontSize: 24,
-    fontFamily: fonts.bold,
+    fontFamily: fonts.regular,
     color: '#fff',
   },
   messagesContainer: {
@@ -307,14 +328,14 @@ const styles = StyleSheet.create({
   messageBubble: {
     maxWidth: '80%',
     padding: 12,
-    borderRadius: 16,
+    borderRadius: 12,
     marginBottom: 12,
   },
   userMessage: {
     alignSelf: 'flex-end',
-    backgroundColor: 'rgba(255, 107, 53, 0.2)',
+    backgroundColor: 'rgba(255, 107, 53, 0.15)',
     borderWidth: 1,
-    borderColor: 'rgba(255, 107, 53, 0.35)',
+    borderColor: 'rgba(255, 107, 53, 0.3)',
   },
   assistantMessage: {
     alignSelf: 'flex-start',
@@ -331,9 +352,9 @@ const styles = StyleSheet.create({
   inputContainer: {
     flexDirection: 'row',
     padding: 16,
-    backgroundColor: 'rgba(11, 11, 15, 0.95)',
+    backgroundColor: '#000000',
     borderTopWidth: 1,
-    borderTopColor: 'rgba(255, 107, 53, 0.2)',
+    borderTopColor: 'rgba(255, 255, 255, 0.1)',
     paddingBottom: Platform.OS === 'ios' ? 34 : 16,
   },
   input: {
@@ -378,10 +399,10 @@ const styles = StyleSheet.create({
   premiumUpgradeCard: {
     alignItems: 'center',
     padding: 24,
-    borderRadius: 20,
-    backgroundColor: 'rgba(11, 11, 15, 0.98)',
-    borderWidth: 2,
-    borderColor: 'rgba(255, 107, 53, 0.4)',
+    borderRadius: 16,
+    backgroundColor: 'rgba(0, 0, 0, 0.98)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 107, 53, 0.3)',
     shadowColor: '#FF6B35',
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.3,
@@ -403,7 +424,7 @@ const styles = StyleSheet.create({
   },
   upgradeTitle: {
     fontSize: 22,
-    fontFamily: fonts.bold,
+    fontFamily: fonts.regular,
     color: '#fff',
     marginBottom: 10,
     textAlign: 'center',
@@ -417,30 +438,26 @@ const styles = StyleSheet.create({
     paddingHorizontal: 4,
   },
   upgradeButton: {
-    borderRadius: 16,
-    overflow: 'hidden',
-    marginBottom: 12,
-    shadowColor: '#FF6B35',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 4,
-  },
-  upgradeGradient: {
+    borderRadius: 12,
+    backgroundColor: '#FF6B35',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 16,
     paddingHorizontal: 32,
     gap: 8,
+    marginBottom: 12,
+  },
+  upgradeButtonDisabled: {
+    backgroundColor: 'rgba(255, 107, 53, 0.5)',
   },
   upgradeIcon: {
     marginRight: 4,
   },
   upgradeButtonText: {
     color: '#fff',
-    fontSize: 18,
-    fontFamily: fonts.bold,
+    fontSize: 16,
+    fontFamily: fonts.regular,
     textAlign: 'center',
   },
   upgradeSubtext: {
